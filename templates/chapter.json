@@ -1,0 +1,69 @@
+{
+    "chapter": {
+        "chapter": 4,
+        "num_sections": 3,
+        "figs": true,
+        "tabs": true,
+        "code": true
+    },
+    "sections": [
+        {
+            "section": 1,
+            "num_subsections": 2,
+            "figs": true,
+            "tabs": true,
+            "code": true
+        },
+        {
+            "section": 2,
+            "num_subsections": 3,
+            "figs": true,
+            "tabs": true,
+            "code": true
+        },
+        {
+            "section": 3,
+            "num_subsections": 0,
+            "figs": true,
+            "tabs": true,
+            "code": true
+        }
+    ],
+    "subsections": {
+        "1": [
+            {
+                "subsection": 1,
+                "figs": true,
+                "tabs": true,
+                "code": true
+            },
+            {
+                "subsection": 2,
+                "figs": true,
+                "tabs": true,
+                "code": true
+            }
+        ],
+        "2": [
+            {
+                "subsection": 1,
+                "figs": true,
+                "tabs": true,
+                "code": true
+            },
+            {
+                "subsection": 2,
+                "figs": true,
+                "tabs": true,
+                "code": true
+            },
+            {
+                "subsection": 3,
+                "figs": true,
+                "tabs": true,
+                "code": true
+            }
+        ],
+        "3": []
+    }
+}
