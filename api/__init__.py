@@ -5,8 +5,9 @@ __doc__ = """The API interface to the LaTeX project.
 Note that this interface uses the Google style python docstrings,
 as given in [1].
 
-References:
-    [1] https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
+References
+----------
+[1] https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
 
 """
 
@@ -56,12 +57,15 @@ TEX_FILE: str = "tex"
 def get_logger(name: str) -> logging.Logger:
     """Get the logger.
 
-    Args:
-        name (str): The name of the module to be logged.
+    Parameters
+    ----------
+    name : str
+        The name of the module to be logged.
 
-    Returns:
-        logging.Logger: The logger object.
-
+    Returns
+    -------
+    logging.Logger
+        The logger object.
     """
     logger = logging.getLogger(name)
 

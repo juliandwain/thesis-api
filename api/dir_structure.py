@@ -22,21 +22,28 @@ LOGGER = get_logger(__name__)
 
 def format_table(number: Union[int, float], unit: Optional[str] = None) -> str:
     r"""Format numbers in tables.
+    
+    When writing a pandas DataFrame to a LaTeX table,
+    this function can be used to wrap the columns specified
+    (columns containing numbers) in \num or \SI from siunitx.
 
-    When writing a pandas DataFrame to a LaTeX table, this function can be used to
-    wrap the columns specified (columns containing numbers) in \num or \SI from siunitx.
+    Parameters
+    ----------
+    number : Union[int, float]
+        The number from the DataFrame.
+    unit : Optional[str], optional
+        The corresponding unit, by default None
 
+    Returns
+    -------
+    str
+        A LaTeX siuntix string.
 
-    Args:
-        number (Union[int, float]): The number from the DataFrame.
-        unit (Optional[str], optional): The corresponding unit. Defaults to None.
-
-    Notes:
-        The ``unit`` parameter can often be neglected since one can write the unit of the column
-        (since most entries in columns have the same unit) within the column's respective header.
-
-    Returns:
-        str: A LaTeX siuntix string.
+    Notes
+    -----
+    The ``unit`` parameter can often be neglected since one can write the unit
+    of the column (since most entries in columns have the same unit)
+    within the column's respective header.
 
     """
     return (
@@ -54,22 +61,28 @@ class Chapter(object):
     ) -> None:
         r"""Init the class.
 
-        Args:
-            filename (str): The name of the data under which it should be saved.
-            chapter_dir (pathlib.Path): The chapter directory.
-            location (str): The location in which the data should be saved. This is a string,
-                e.g.,
+        Parameters
+        ----------
+        filename : str
+            The name of the data under which it should be saved.
+        chapter_dir : pathlib.Path
+            The chapter directory.
+        location : str
+            The location in which the data should be saved. This is a string,
+            e.g.,
 
-                * "chapter3\nsection3"
-                * "chapter4\nsection2\nsubsection1"
-                * "chapter1\n"
+            * "chapter3\nsection3"
+            * "chapter4\nsection2\nsubsection1"
+            * "chapter1\n"
 
-            typ (str): The type of data which should be saved. This can be either of the following:
+        typ : str
+            The type of data which should be saved.
+            This can be either of the following:
 
-                * "figs"
-                * "tabs"
-                * "code"
-
+            * "figs"
+            * "tabs"
+            * "code"
+        
         """
         # save the chapter directory
         self._chapter_dir: pathlib.Path = chapter_dir
@@ -89,8 +102,10 @@ class Chapter(object):
     def __str__(self) -> str:
         """String representation of ``self``.
 
-        Returns:
-            str: A string representing ``self``.
+        Returns
+        -------
+        str
+            The class as string.
 
         """
         msg: str = f"|-{self._chapter_dir.absolute()}\n"
@@ -105,8 +120,10 @@ class Chapter(object):
     def _construct_path(self,) -> pathlib.Path:
         """Construct the path in which the file should be saved.
 
-        Returns:
-            pathlib.Path: The path within the chapters folder where the figure should be saved.
+        Returns
+        -------
+        pathlib.Path
+            The path within the chapters folder where the figure should be saved.
 
         """
         folders = (
@@ -128,11 +145,14 @@ class Chapter(object):
     ) -> None:
         """Fill the LaTeX template.
 
-        Args:
-            fname (pathlib.Path): The file which should be created based on ``template_str``.
-            template_str (string.Template): The template string.
-            template_desc (dict[str, Union[float, str]]): The fields to write to the template.
-
+        Parameters
+        ----------
+        fname : pathlib.Path
+            The file which should be created based on ``template_str``.
+        template_str : string.Template
+            The template string.
+        template_desc : dict[str, Union[float, str]]
+            The fields to write to the template.
         """
         template = template_str.substitute(template_desc)
         with fname.open(mode="w", encoding=ENCODING) as file:
@@ -145,24 +165,32 @@ class Chapter(object):
     ) -> None:
         r"""Save a result to a figure.
 
-        Args:
-            fig (Union[MPLFigure, PLFigure]): The figure which should be saved.
-            fig_desc (dict[str, Union[float, str]]): The discription of the figure, see also [1].
-                The most important args are:
+        Parameters
+        ----------
+        fig : Union[MPLFigure, PLFigure]
+            The figure which should be saved.
+        fig_desc : dict[str, Union[float, str]]
+            The discription of the figure, see also [1].
+            The most important args are:
 
-                * "width": The width of the figure, float
-                * "caption": Tuple (full_caption, short_caption), which results in ``\caption[short_caption]{full_caption}``;
-                    if a single string is passed, no short caption will be set.
-                * "label": The LaTeX label to be placed inside ``\label{}`` in the output.
-                    This is used with ``\(c)ref{}`` in the main ``.tex`` file.
-                * "position": The LaTeX positional argument for tables, to be placed after ``\begin{}`` in the output.
+            * "width": The width of the figure, float.
+            * "caption": Tuple (full_caption, short_caption), which results in
+                ``\caption[short_caption]{full_caption}``;
+                if a single string is passed, no short caption will be set.
+            * "label": The LaTeX label to be placed inside ``\label{}`` in the output.
+                This is used with ``\(c)ref{}`` in the main ``.tex`` file.
+            * "position": The LaTeX positional argument for tables,
+                to be placed after ``\begin{}`` in the output.
 
-        Raises:
-            TypeError: If the ``fig`` argument is neither of type ``matplotlib.figure.Figure`` nor of type
-                ``plotly.graph_objs._figure.Figure``.
+        Raises
+        ------
+        TypeError
+            If the ``fig`` argument is neither of type ``matplotlib.figure.Figure``
+            nor of type ``plotly.graph_objs._figure.Figure``.
 
-        References:
-            [1] https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_latex.html
+        References
+        ----------
+        [1] https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_latex.html
 
         """
         # construct the corresponding path
@@ -211,25 +239,33 @@ class Chapter(object):
     ) -> None:
         r"""Save a result to a table.
 
-        Args:
-            data (pd.DataFrame): The data which should be saved as a table.
-            data_desc (dict): The description of the table, see also [1].
-                The most important args are:
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The data which should be saved as a table.
+        data_desc : dict[str, Union[str, tuple]]
+            The discription of the figure, see also [1].
+            The most important args are:
 
-                * "caption": Tuple (full_caption, short_caption), which results in ``\caption[short_caption]{full_caption}``;
-                    if a single string is passed, no short caption will be set.
-                * "label": The LaTeX label to be placed inside ``\label{}`` in the output.
-                    This is used with ``\(c)ref{}`` in the main ``.tex`` file.
-                * "position": The LaTeX positional argument for tables, to be placed after ``\begin{}`` in the output.
-
-            format_cols (Optional[dict[str, Optional[str]]]): A dictionary which maps columns to the
-                ``format_table`` function which formats floats for LaTeX.
-                Note that the value can be None if the numbers do not have a unit. Defaults to None.
-            latex_args (dict[str, Union[float, str]]): A dict of arguments specific for LaTeX. Defaults to {}.
-
-        References:
-            [1] https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_latex.html
-
+            * "width": The width of the figure, float.
+            * "caption": Tuple (full_caption, short_caption), which results in
+                ``\caption[short_caption]{full_caption}``;
+                if a single string is passed, no short caption will be set.
+            * "label": The LaTeX label to be placed inside ``\label{}`` in the output.
+                This is used with ``\(c)ref{}`` in the main ``.tex`` file.
+            * "position": The LaTeX positional argument for tables,
+                to be placed after ``\begin{}`` in the output.
+            
+        format_cols : Optional[dict[str, Optional[str]]], optional
+            A dictionary which maps columns to the
+            ``format_table`` function which formats floats for LaTeX,
+            by default None.
+        latex_args : dict[str, Union[float, str]], optional
+            A dict of arguments specific for LaTeX, by default {}.
+        
+        References
+        ----------
+        [1] https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_latex.html
         """
         # construct the corresponding path
         goal_dir: pathlib.Path = self._construct_path()
@@ -261,15 +297,18 @@ class Chapter(object):
         self.update(parent_filename_tex, child_filename)
 
     def update(self, parent: pathlib.Path, child: pathlib.Path,) -> None:
-        """Update the figure.
+        """Update the result.
 
-        If the figure is newly created but should still be located in the same file,
-        then only the figure is updated but the path in the file stays the same.
+        If the result is newly created but should still be located
+        in the same file, then only the figure is updated but
+        the path in the file stays the same.
 
-        Args:
-            parent (pathlib.Path): The parent file in which the figure is included.
-            child (pathlib.Path): The figure file which is included in the parent.
-
+        Parameters
+        ----------
+        parent : pathlib.Path
+            The parent file in which the figure is included.
+        child : pathlib.Path
+            The figure file which is included in the parent.
         """
         # if only the figure should be updated but not the parent and the corresponding input
         temp: str = ""
