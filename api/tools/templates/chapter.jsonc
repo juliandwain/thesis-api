@@ -1,0 +1,73 @@
+{
+    // define the chapter
+    "chapter": {
+        "chapter": 3, // define the chapter number
+        "num_sections": 3, // define the number of sections within the chapter
+        "figs": true, // define if the figures are included on chapter level
+        "tabs": true, // define if the tables are included on chapter level
+        "code": true // define if the codes are included on chapter level
+    },
+    // define the sections as list, note that the number of elements must match num_sections from "chapter"
+    "sections": [
+        {
+            "section": 1, // define the section number
+            "num_subsections": 2, // define the number of subsections
+            "figs": true, // define if the figures are included on section level
+            "tabs": true, // define if the tables are included on section level
+            "code": true // define if the codes are included on section level
+        },
+        {
+            "section": 2, // define the section number
+            "num_subsections": 3, // define the number of subsections
+            "figs": true, // define if the figures are included on section level
+            "tabs": true, // define if the tables are included on section level
+            "code": true // define if the codes are included on section level
+        },
+        {
+            "section": 3, // define the section number
+            "num_subsections": 0, // define the number of subsections
+            "figs": true, // define if the figures are included on section level
+            "tabs": true, // define if the tables are included on section level
+            "code": true // define if the codes are included on section level
+        }
+    ],
+    // define the subsections as dictionary, where the key are the corresponding section and the value is a list of subsections
+    // note that the number of subsections must match the number from above, i.e., for section 1 with 2 subsections, the list in key "1" should contain 2 elements
+    "subsections": {
+        "1": [
+            {
+                "subsection": 1, // define the subsection number
+                "figs": true, // define if the figures are included on subsection level
+                "tabs": true, // define if the tables are included on subsection level
+                "code": true // define if the codes are included on subsection level
+            },
+            {
+                "subsection": 2, // define the subsection number
+                "figs": true, // define if the figures are included on subsection level
+                "tabs": true, // define if the tables are included on subsection level
+                "code": true // define if the codes are included on subsection level
+            }
+        ],
+        "2": [
+            {
+                "subsection": 1, // define the subsection number
+                "figs": true, // define if the figures are included on subsection level
+                "tabs": true, // define if the tables are included on subsection level
+                "code": true // define if the codes are included on subsection level
+            },
+            {
+                "subsection": 2, // define the subsection number
+                "figs": true, // define if the figures are included on subsection level
+                "tabs": true, // define if the tables are included on subsection level
+                "code": true // define if the codes are included on subsection level
+            },
+            {
+                "subsection": 3, // define the subsection number
+                "figs": true, // define if the figures are included on subsection level
+                "tabs": true, // define if the tables are included on subsection level
+                "code": true // define if the codes are included on subsection level
+            }
+        ],
+        "3": [] // section 2 has no subsections
+    }
+}
