@@ -4,7 +4,7 @@ import pathlib
 import re
 import shutil
 import string
-from typing import Optional
+from typing import Iterable, Optional, Union
 
 from .. import ENCODING, get_logger
 from .template_strings import (
@@ -13,7 +13,6 @@ from .template_strings import (
     SubsectionTemplate,
 )
 
-COUNTER = 0
 INPUT_TEMPLATE = string.Template("\n\\input{$path}\n")
 LOGGER = get_logger(__name__)
 PATTERN = re.compile("(?<=input{).*?(?=})")
@@ -30,33 +29,64 @@ class Maintainer(object):
             The path to the thesis directory.
         
         """
-        self._thesis_dir = thesis_dir
-        self._chapter_dir = thesis_dir / "chapters"
+        self._thesis_dir: pathlib.Path = thesis_dir
+        self._chapter_dir: pathlib.Path = thesis_dir / "chapters"
+        self._main_file: pathlib.Path = thesis_dir / "main.tex"
+        self._counter: int = 0
         super().__init__()
 
-    def check_inputs(self, child: Optional[pathlib.Path] = None) -> None:
-        """Recursivley check ``child`` for \\input statements.
+    @property
+    def counter(self):
+        return self._counter
+
+    def check_inputs(self, child: pathlib.Path) -> None:
+        """Recursivley check ``child`` for ``\\input`` statements.
 
         Parameters
         ----------
-        child : Optional[pathlib.Path], optional
-            The file which should be checked for input statements,
-            by default None.
+        child : pathlib.Path]
+            The file which should be checked for input statements.
         
         """
-        for child in self._thesis_dir.iterdir():
-            if child.is_dir():
-                if any(child.iterdir()):
-                    self.check_inputs(child)
+        for child_ in child.iterdir():
+            if child_.is_dir():
+                if any(child_.iterdir()):
+                    self.check_inputs(child_)
             else:
-                if TEX_FILE in child.parts[-1]:
-                    inputs = self.find_input(child)
-                    for inp in inputs:
+                if TEX_FILE in child_.parts[-1]:
+                    for inp in self.find_input(child_):
                         if not inp.exists():
-                            COUNTER += 1
+                            self._counter += 1
                             LOGGER.warning(
-                                f"File {inp} is included in {child} but does not exist!\n"
+                                f"File {inp} is included in {child_} but does not exist!\n"
                             )
+
+    def check_main(self):
+        """Check the ``main.tex`` file for all input statements.
+
+        This function check 2 cases:
+
+        1) The input statements in the ``main.tex`` file and if the
+            corresponding files exist.
+        2) The chapter tex files in the chapters directory and if
+            they are included in the ``main.tex`` file, and if not,
+            then they are written to the corresponding place.
+            
+        """
+        temp = self._main_file.read_text(encoding=ENCODING)
+        inputs_re = list(PATTERN.finditer(temp))
+        for p in inputs_re:
+            path = self._thesis_dir.resolve() / p.group(0)
+            if path.exists():
+                LOGGER.debug(
+                    f"{path} exists and is included in {self._main_file.resolve()}!\n"
+                )
+            else:
+                LOGGER.warning(
+                    f"{path} does not exist but is included in {self._main_file.resolve()}!\n"
+                )
+        for p in self._chapter_dir.glob("chapter*/*.tex"):
+            print(p)
 
     def cleanup(self, child=None, delete: bool = False) -> None:
         """Cleanup empty folders.
@@ -110,7 +140,12 @@ class Maintainer(object):
                     f"Folder {temp_path} was not created because it was set to {v}."
                 )
 
-    def find_input(self, path: pathlib.Path) -> list[pathlib.Path]:
+    def create_subfolder(self, data: dict):
+        typ: str = next(iter(data))
+        num: str = str(data.pop(typ, 10))
+        period: str = typ + num
+
+    def find_input(self, path: pathlib.Path) -> Iterable[pathlib.Path]:
         """Find all ``\\input`` statements in a given file.
 
         Parameters
@@ -118,18 +153,84 @@ class Maintainer(object):
         path : pathlib.Path
             The file which should be examined.
 
-        Returns
-        -------
-        list[pathlib.Path]
-            A list of all paths in input statements.
+        Yields
+        ------
+        Iterable[pathlib.Path]
+            The corresponding path within the ``input`` statement.
 
         """
-        with path.open(mode="r", encoding=ENCODING) as file:
-            temp = file.read()
-            inputs = [pathlib.Path(p.group(0)) for p in PATTERN.finditer(temp)]
-        return inputs
+        temp = path.read_text(encoding=ENCODING)
+        for p in PATTERN.finditer(temp):
+            yield pathlib.Path(p.group(0))
 
-    def init_chapter_dir(self, chapter, sections, subsections) -> None:
+    def init_chapter_dir(
+        self,
+        chapter: dict[str, Union[bool, int]],
+        sections: list[dict[str, Union[bool, int]]],
+        subsections: dict[str, list[dict[str, Union[bool, int]]]],
+    ) -> None:
+        """Init an empty chapter directory structure.
+
+        Parameters
+        ----------
+        chapter : dict[str, Union[bool, int]]
+            The description for the chapter top level, this is a dict:
+
+            * "chapter": int, the chapter number.
+            * "num_sections": int, the number of sections.
+            * "figs": bool, whether there are figures on the chapter level.
+            * "tabs": bool, whether there are tables on the chapter level.
+            * "code": bool, whether there are pseudo codes
+                on the chapter level.
+
+        sections : list[dict[str, Union[bool, int]]]
+            The discription of the sections, this is a list of
+            dicts where each dict contains the following values:
+
+            * "section": int, the section number.
+            * "num_subsections": int, the number of subsections.
+            * "figs": bool, whether there are figures on the section level.
+            * "tabs": bool, whether there are tables on the section level.
+            * "code": bool, whether there are pseudo codes
+                on the section level.
+
+        subsections : dict[str, list[dict[str, Union[bool, int]]]]
+            The description of the subsections, this is a dictionary
+            where each key corresponds to the subsection number and the value
+            is a list of dictionaries containing the following values:
+
+            * "subsection": int, the subsection number.
+            * "figs": bool, whether there are figures on the subsection level.
+            * "tabs": bool, whether there are tables on the subsection level.
+            * "code": bool, whether there are pseudo codes
+                on the subsection level.
+
+
+        Raises
+        ------
+        e
+            [description]
+
+        Notes
+        -----
+        For convenience, there is a ``chapter.json`` file located in the
+        templates folder in this api which can be easily adapted and read
+        into a dictionary, see the examples section.
+        This function is only useful for initializing an empty chapter
+        directory.
+
+        Examples
+        --------
+        >>> import json
+        >>> import pathlib
+        >>> template = pathlib.Path("PATH/TO/TEMPLATE)
+        >>> with template.open(mode="r", encoding="utf-8") as file:
+        >>>     data = json.load(file)
+        >>> self.init_chapter_dir(
+        >>>     data["chapter"], data["sections"], data["subsections"]   
+        >>> )
+
+        """
         # get the type of folder to create
         chapter_type = next(iter(chapter))
         # get the chapter number
@@ -180,7 +281,7 @@ class Maintainer(object):
                 # create the section directories
                 self.create_ftc(sec_dir, section)
                 chapter_template_str += INPUT_TEMPLATE.substitute(
-                    path=f"{sec_file}".replace("\\", "/")
+                    path=self._resolve_path_string(sec_file)
                 )
                 if num_subsections != 0:
                     subsec_path = sec_dir / "subsections"
@@ -205,7 +306,7 @@ class Maintainer(object):
                         # create the subsection directories
                         self.create_ftc(subsec_dir, subsection)
                         sec_template_str += INPUT_TEMPLATE.substitute(
-                            path=f"{subsec_file}".replace("\\", "/")
+                            path=self._resolve_path_string(subsec_file)
                         )
                 else:
                     LOGGER.debug(f"No Subsections created in {sec_dir}!")
@@ -216,6 +317,29 @@ class Maintainer(object):
             LOGGER.debug(f"No Sections created in {chapter_path}!")
         # create the chapter latex file
         self.tex_file(chapter_file, chapter_template_str)
+
+    def _resolve_path_string(self, path: pathlib.Path) -> str:
+        """Resolve the path string.
+
+        This function ensures that within the LaTeX file, only the relative
+        part to the document is placed.
+
+        Parameters
+        ----------
+        path : pathlib.Path
+            The path to the LaTeX document.
+
+        Returns
+        -------
+        str
+            The relative part as string.
+        
+        """
+        for i, part in enumerate(path.parts):
+            if part == "chapters":
+                child = "/".join(path.parts[i:])
+                break
+        return child
 
     def tex_file(self, path: pathlib.Path, temp: str) -> None:
         """Create the template LaTeX file.
@@ -234,7 +358,6 @@ class Maintainer(object):
 
         """
         if not path.exists():
-            with path.open(mode="w", encoding=ENCODING, newline="\n") as file:
-                file.write(temp)
+            path.write_text(temp, encoding=ENCODING)
         else:
             LOGGER.debug(f"File {path} already exists.")
