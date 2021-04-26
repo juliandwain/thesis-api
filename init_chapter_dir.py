@@ -6,7 +6,7 @@ __doc__ = """Initialize a chapter directory with template files.
 import json
 import pathlib
 
-from conf import ENCODING
+from api import ENCODING
 from api.tools.maintenance import Maintainer
 
 
