@@ -108,7 +108,7 @@ class Chapter(object):
             The class as string.
 
         """
-        msg: str = f"|-{self._chapter_dir.absolute()}\n"
+        msg: str = f"|-{self._chapter_dir.resolve()}\n"
         for i, loc in enumerate(self._location, start=1):
             msg += "|" + i * "--" + f">{loc}\n"
         i += 1
@@ -117,7 +117,7 @@ class Chapter(object):
         msg += "|" + i * "--" + f">{self._filename}\n"
         return msg
 
-    def _construct_path(self,) -> pathlib.Path:
+    def _construct_path(self) -> pathlib.Path:
         """Construct the path in which the file should be saved.
 
         Returns
@@ -155,8 +155,7 @@ class Chapter(object):
             The fields to write to the template.
         """
         template = template_str.substitute(template_desc)
-        with fname.open(mode="w", encoding=ENCODING) as file:
-            file.write(template)
+        fname.write_text(template, encoding=ENCODING)
 
     def save_fig(
         self,
@@ -309,6 +308,7 @@ class Chapter(object):
             The parent file in which the figure is included.
         child : pathlib.Path
             The figure file which is included in the parent.
+            
         """
         # if only the figure should be updated but not the parent and the corresponding input
         temp: str = ""
@@ -316,11 +316,13 @@ class Chapter(object):
             if part == "chapters":
                 child_ = "/".join(child.parts[i:])
                 break
-        string = self._inputstr.substitute(path=child_)
+        string_ = self._inputstr.substitute(path=child_)
         with parent.open(mode="r+", encoding=ENCODING) as file:
             temp: str = file.read()
-            if string in temp:
-                LOGGER.debug(f"{string} is already in {parent}!\n")
+            if string_ in temp:
+                LOGGER.debug(f"{string_} is already in {parent}!\n")
             else:
-                LOGGER.debug(f"{string} is appended to the end of {parent}!\n")
-                file.write(string)
+                LOGGER.debug(
+                    f"{string_} is appended to the end of {parent}!\n"
+                )
+                file.write(string_)
