@@ -18,15 +18,12 @@ import argparse
 import pathlib
 import shutil
 
-from conf import get_logger
+from api import get_logger
 
 LOGGER = get_logger(__name__)
 
 
-def cleanup(
-    path: pathlib.Path,
-    delete: bool,
-) -> None:
+def cleanup(path: pathlib.Path, delete: bool,) -> None:
     """Cleanup empty folders.
 
     Parameters
@@ -51,9 +48,7 @@ def cleanup(
             continue
 
 
-def main(
-    delete: bool = False
-) -> None:
+def main(delete: bool = False) -> None:
     """Main function.
 
     Parameters
@@ -69,7 +64,10 @@ def main(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--delete", type=int,
-                        help="Determine if the folders should be deleted (1) or not (0)")
+    parser.add_argument(
+        "--delete",
+        type=int,
+        help="Determine if the folders should be deleted (1) or not (0)",
+    )
     args = parser.parse_args()
     main(delete=bool(args.delete))
