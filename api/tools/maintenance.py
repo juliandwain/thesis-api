@@ -130,8 +130,8 @@ class Maintainer(object):
         path : pathlib.Path
             The path in which the ftc-direcotires should be created.
         typ : dict
-            A dictionary containing information abouth which of the directories
-            should be created at a given level.
+            A dictionary containing information abouth which
+            of the directories should be created at a given level.
 
         """
         for k, v in typ.items():

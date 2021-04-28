@@ -2,19 +2,12 @@
 
 __doc__ = """The API interface to the LaTeX project.
 
-Note that this interface uses the Google style python docstrings,
-as given in [1].
-
-References
-----------
-[1] https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
+Note that this interface uses the Numpy style python docstrings.
 
 """
 
 import logging
 import sys
-
-import coloredlogs
 
 __version__ = "0.0.1"
 
@@ -94,8 +87,6 @@ def get_logger(name: str, stream: bool = False) -> logging.Logger:
     """
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
-    # define the formatter for both handlers
-    formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(message)s")
 
     if stream:
         stream_handler = logging.StreamHandler(stream=sys.stdout)
@@ -109,7 +100,7 @@ def get_logger(name: str, stream: bool = False) -> logging.Logger:
             name + ".log", mode="w", encoding=ENCODING
         )
         file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(formatter)
+        file_handler.setFormatter(CustomFormatter())
         # add the file handler
         logger.addHandler(file_handler)
     return logger

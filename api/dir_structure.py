@@ -123,7 +123,8 @@ class Chapter(object):
         Returns
         -------
         pathlib.Path
-            The path within the chapters folder where the figure should be saved.
+            The path within the chapters folder where
+            the figure should be saved.
 
         """
         folders = (
@@ -176,7 +177,8 @@ class Chapter(object):
             * "caption": Tuple (full_caption, short_caption), which results in
                 ``\caption[short_caption]{full_caption}``;
                 if a single string is passed, no short caption will be set.
-            * "label": The LaTeX label to be placed inside ``\label{}`` in the output.
+            * "label": The LaTeX label to be placed inside ``\label{}``
+                in the output.
                 This is used with ``\(c)ref{}`` in the main ``.tex`` file.
             * "position": The LaTeX positional argument for tables,
                 to be placed after ``\begin{}`` in the output.
@@ -184,8 +186,9 @@ class Chapter(object):
         Raises
         ------
         TypeError
-            If the ``fig`` argument is neither of type ``matplotlib.figure.Figure``
-            nor of type ``plotly.graph_objs._figure.Figure``.
+            If the ``fig`` argument is neither of type
+            ``matplotlib.figure.Figure`` nor of type
+            ``plotly.graph_objs._figure.Figure``.
 
         References
         ----------
@@ -250,7 +253,8 @@ class Chapter(object):
             * "caption": Tuple (full_caption, short_caption), which results in
                 ``\caption[short_caption]{full_caption}``;
                 if a single string is passed, no short caption will be set.
-            * "label": The LaTeX label to be placed inside ``\label{}`` in the output.
+            * "label": The LaTeX label to be placed inside ``\label{}``
+                in the output.
                 This is used with ``\(c)ref{}`` in the main ``.tex`` file.
             * "position": The LaTeX positional argument for tables,
                 to be placed after ``\begin{}`` in the output.
