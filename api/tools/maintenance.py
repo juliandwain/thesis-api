@@ -6,7 +6,7 @@ import shutil
 import string
 from typing import Iterable, Union
 
-from .. import ENCODING, get_logger
+from .. import LATEX_CONFIG_DIC, get_logger
 from .template_strings import (
     ChapterTemplate,
     SectionTemplate,
@@ -16,7 +16,6 @@ from .template_strings import (
 INPUT_TEMPLATE = string.Template("\n\\input{$path}\n")
 LOGGER = get_logger(__name__, stream=False)
 PATTERN = re.compile("(?<=input{).*?(?=})")
-TEX_FILE = ".tex"
 
 
 class Maintainer(object):
@@ -53,7 +52,7 @@ class Maintainer(object):
                 if any(child_.iterdir()):
                     self.check_inputs(child_)
             else:
-                if TEX_FILE in child_.parts[-1]:
+                if LATEX_CONFIG_DIC["tex_file"] in child_.parts[-1]:
                     for inp in self.find_input(child_):
                         if not (
                             p := self._thesis_dir.resolve() / inp
@@ -79,7 +78,7 @@ class Maintainer(object):
             then they are written to the corresponding place.
             
         """
-        temp = self._main_file.read_text(encoding=ENCODING)
+        temp = self._main_file.read_text(encoding=LATEX_CONFIG_DIC["encoding"])
         inputs_re = list(PATTERN.finditer(temp))
         for p in inputs_re:
             path = self._thesis_dir.resolve() / p.group(0)
@@ -165,7 +164,7 @@ class Maintainer(object):
             The corresponding path within the ``input`` statement.
 
         """
-        temp = path.read_text(encoding=ENCODING)
+        temp = path.read_text(encoding=LATEX_CONFIG_DIC["encoding"])
         for p in PATTERN.finditer(temp):
             yield pathlib.Path(p.group(0))
 
@@ -256,7 +255,7 @@ class Maintainer(object):
                 f"{chapter_path} already exists!\nMaybe you want to create a new chapter?\n"
             )
             raise e
-        chapter_file = chapter_path / (chapter_ + TEX_FILE)
+        chapter_file = chapter_path / (chapter_ + LATEX_CONFIG_DIC["tex_file"])
         # create the chapter directories
         self.create_ftc(chapter_path, chapter)
         # open the chapter template
@@ -277,7 +276,7 @@ class Maintainer(object):
                 ), f"Number of subsections does not match!\nExpected: {num_subsections}, Got: {n}!"
                 sec_dir = sec_path / sec_
                 sec_dir.mkdir(parents=True, exist_ok=True)
-                sec_file = sec_dir / (sec_ + TEX_FILE)
+                sec_file = sec_dir / (sec_ + LATEX_CONFIG_DIC["tex_file"])
                 # open the section template
                 sec_template = SectionTemplate()
                 sec_template_str = sec_template.substitute(
@@ -297,7 +296,7 @@ class Maintainer(object):
                         subsec_ = subsec_type + subsec_num
                         subsec_dir = subsec_path / subsec_
                         subsec_dir.mkdir(parents=True, exist_ok=True)
-                        subsec_file = subsec_dir / (subsec_ + TEX_FILE)
+                        subsec_file = subsec_dir / (subsec_ + LATEX_CONFIG_DIC["tex_file"])
                         # open the subsection template
                         subsec_template = SubsectionTemplate()
                         # create the subsection latex file
@@ -363,6 +362,6 @@ class Maintainer(object):
 
         """
         if not path.exists():
-            path.write_text(temp, encoding=ENCODING)
+            path.write_text(temp, encoding=LATEX_CONFIG_DIC["encoding"])
         else:
             LOGGER.debug(f"File {path} already exists.")

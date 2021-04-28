@@ -12,7 +12,7 @@ import pandas as pd
 from matplotlib.figure import Figure as MPLFigure
 from plotly.graph_objs._figure import Figure as PLFigure
 
-from . import *
+from . import LATEX_CONFIG_DIC, get_logger
 from .tools import FigureTemplate, TableTemplate
 
 LOGGER = get_logger(__name__)
@@ -156,7 +156,7 @@ class Chapter(object):
             The fields to write to the template.
         """
         template = template_str.substitute(template_desc)
-        fname.write_text(template, encoding=ENCODING)
+        fname.write_text(template, encoding=LATEX_CONFIG_DIC["encoding"])
 
     def save_fig(
         self,
@@ -321,7 +321,9 @@ class Chapter(object):
                 child_ = "/".join(child.parts[i:])
                 break
         string_ = self._inputstr.substitute(path=child_)
-        with parent.open(mode="r+", encoding=ENCODING) as file:
+        with parent.open(
+            mode="r+", encoding=LATEX_CONFIG_DIC["encoding"]
+        ) as file:
             temp: str = file.read()
             if string_ in temp:
                 LOGGER.debug(f"{string_} is already in {parent}!\n")
