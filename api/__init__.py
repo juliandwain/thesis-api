@@ -14,36 +14,17 @@ __version__ = "0.0.1"
 
 ##################
 
-ENCODING: str = "utf-8"
-"""str: The encoding of all files.
-"""
-
 LATEX_CONFIG_DIC = {
     "arraystretch": 1.8,  # scaling of tables
     "si_round_precision": 3,  # round precision of siunitx
+    "encoding": "utf-8",  # the encoding of the LaTeX files
+    "tex_file": ".tex",  # the file ending of LaTeX files
+    "scrbook_width": 14.89787,  # the width of the scrbook class in [cm]
+    # This is the line width of the LaTeX class scrbook in [cm], which my be useful for tables, etc.
+    # The line length can be obtained by including the package printlen in praeambel.tex and typing
+    # \uselengthunit{cm}\printlength{\textwidth} in a file.
 }
-"""dict: The configurations in the LaTeX file.
-"""
-
-SCRBOOK_WIDTH: float = 14.89787  # the width of the scrbook class in [cm]
-r"""float: The width in [cm].
-
-This is the line width of the LaTeX class scrbook in [cm], which my be useful for tables, etc.
-The line length can be obtained by including the package printlen in praeambel.tex and typing
-\uselengthunit{cm}\printlength{\textwidth} in a file.
-"""
-LATEX_CONFIG_DIC["scrbook_width"] = SCRBOOK_WIDTH
-
-TEMPLATES: dict[str, str] = {
-    "figs": "figure.tex",
-    "tabs": "table.tex",
-    "code": "code.tex",
-}
-"""dict[str, str]: The mapping from the folder to the template to use.
-"""
-
-TEX_FILE: str = "tex"
-"""str: The file ending for LaTeX files.
+"""dict[str, Union[float, int, str]]: The configurations in the LaTeX file.
 """
 
 
@@ -97,7 +78,7 @@ def get_logger(name: str, stream: bool = False) -> logging.Logger:
         # coloredlogs.install(level="DEBUG", logger=logger)
     else:
         file_handler = logging.FileHandler(
-            name + ".log", mode="w", encoding=ENCODING
+            name + ".log", mode="w", encoding=LATEX_CONFIG_DIC["encoding"]
         )
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(CustomFormatter())
