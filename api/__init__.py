@@ -54,7 +54,31 @@ TEX_FILE: str = "tex"
 """
 
 
-def get_logger(name: str) -> logging.Logger:
+class CustomFormatter(logging.Formatter):
+    """Logging Formatter to add colors and count warning / errors"""
+
+    grey = "\x1b[38;21m"
+    yellow = "\x1b[33;21m"
+    red = "\x1b[31;21m"
+    bold_red = "\x1b[31;1m"
+    reset = "\x1b[0m"
+    format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
+
+    FORMATS = {
+        logging.DEBUG: grey + format + reset,
+        logging.INFO: grey + format + reset,
+        logging.WARNING: yellow + format + reset,
+        logging.ERROR: red + format + reset,
+        logging.CRITICAL: bold_red + format + reset,
+    }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+
+def get_logger(name: str, stream: bool = False) -> logging.Logger:
     """Get the logger.
 
     Parameters
@@ -66,18 +90,26 @@ def get_logger(name: str) -> logging.Logger:
     -------
     logging.Logger
         The logger object.
+
     """
     logger = logging.getLogger(name)
-
     logger.setLevel(logging.DEBUG)
+    # define the formatter for both handlers
+    formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(message)s")
 
-    stream = logging.StreamHandler(stream=sys.stdout)
-    stream.setLevel(logging.DEBUG)
-    stream_formatter = logging.Formatter(
-        "%(asctime)s:%(levelname)s:%(message)s"
-    )
-    stream.setFormatter(stream_formatter)
-    logger.addHandler(stream)
-
-    coloredlogs.install(level="DEBUG", logger=logger)
+    if stream:
+        stream_handler = logging.StreamHandler(stream=sys.stdout)
+        stream_handler.setLevel(logging.DEBUG)
+        stream_handler.setFormatter(CustomFormatter())
+        # add the stream handler
+        logger.addHandler(stream_handler)
+        # coloredlogs.install(level="DEBUG", logger=logger)
+    else:
+        file_handler = logging.FileHandler(
+            name + ".log", mode="w", encoding=ENCODING
+        )
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(formatter)
+        # add the file handler
+        logger.addHandler(file_handler)
     return logger
