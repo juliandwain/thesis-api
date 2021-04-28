@@ -4,7 +4,7 @@ import pathlib
 import re
 import shutil
 import string
-from typing import Iterable, Optional, Union
+from typing import Iterable, Union
 
 from .. import ENCODING, get_logger
 from .template_strings import (
@@ -14,7 +14,7 @@ from .template_strings import (
 )
 
 INPUT_TEMPLATE = string.Template("\n\\input{$path}\n")
-LOGGER = get_logger(__name__)
+LOGGER = get_logger(__name__, stream=False)
 PATTERN = re.compile("(?<=input{).*?(?=})")
 TEX_FILE = ".tex"
 
@@ -55,16 +55,22 @@ class Maintainer(object):
             else:
                 if TEX_FILE in child_.parts[-1]:
                     for inp in self.find_input(child_):
-                        if not inp.exists():
+                        if not (
+                            p := self._thesis_dir.resolve() / inp
+                        ).exists():
                             self._counter += 1
                             LOGGER.warning(
-                                f"File {inp} is included in {child_} but does not exist!\n"
+                                f"File {p} is included in {child_.resolve()} but does not exist!\n"
+                            )
+                        else:
+                            LOGGER.debug(
+                                f"File {p} is included in {child_.resolve()} and exists!\n"
                             )
 
     def check_main(self):
         """Check the ``main.tex`` file for all input statements.
 
-        This function check 2 cases:
+        This function checks 2 cases:
 
         1) The input statements in the ``main.tex`` file and if the
             corresponding files exist.
@@ -204,7 +210,6 @@ class Maintainer(object):
             * "tabs": bool, whether there are tables on the subsection level.
             * "code": bool, whether there are pseudo codes
                 on the subsection level.
-
 
         Raises
         ------
