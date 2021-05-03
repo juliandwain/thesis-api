@@ -260,7 +260,7 @@ class Maintainer(object):
         """
         # get the type of folder to create
         chapter_type = next(iter(chapter))
-        self.create_subfolder(chapter)
+        # self.create_subfolder(chapter)
         # get the chapter number
         chapter_num = str(chapter.pop("chapter", 10))
         # define the chapter
