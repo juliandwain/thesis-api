@@ -6,7 +6,7 @@ template strings, which makes it easy to use them and write to files.
 """
 
 import string
-from typing import Mapping
+from typing import Mapping, Optional
 
 __all__ = [
     "ChapterTemplate",
@@ -15,7 +15,37 @@ __all__ = [
     "FigureTemplate",
     "TableTemplate",
     "CodeTemplate",
+    "InputTemplate",
+    "SiUnitxTemplate",
 ]
+
+
+class SiUnitxTemplate(string.Template):
+    def __init__(self, unit: Optional[str]) -> None:
+        if unit:
+            template: str = "\\SI{$num}{$unit}"
+        else:
+            template: str = "\\num{$num}"
+        super().__init__(template)
+
+
+class InputTemplate(string.Template):
+    def __init__(self) -> None:
+        template: str = "\n\\input{$path}\n"
+        super().__init__(template)
+
+    def substitute(
+        self, __mapping: Mapping[str, object], **kwds: object
+    ) -> str:
+        path = _InputTemplate__mapping["path"]
+        for i, part in enumerate(path.parts):
+            if part == "chapters":
+                child: str = "/".join(path.parts[i:])
+                break
+            else:
+                child: str = f"{path}"
+        _InputTemplate__mapping["path"] = child
+        return super().substitute(_InputTemplate__mapping, **kwds)
 
 
 class ChapterTemplate(string.Template):
@@ -27,9 +57,6 @@ class ChapterTemplate(string.Template):
             "This is a chapter.\n"
         )
         super().__init__(template)
-
-    def __add__(self, other: string.Template):
-        pass
 
 
 class SectionTemplate(string.Template):

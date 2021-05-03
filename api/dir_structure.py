@@ -13,7 +13,11 @@ from matplotlib.figure import Figure as MPLFigure
 from plotly.graph_objs._figure import Figure as PLFigure
 
 from . import LATEX_CONFIG_DIC, get_logger
-from .tools import FigureTemplate, TableTemplate
+from .tools.template_strings import (
+    FigureTemplate,
+    SiUnitxTemplate,
+    TableTemplate,
+)
 
 LOGGER = get_logger(__name__)
 """logging.Logger: The module level logger.
@@ -46,9 +50,12 @@ def format_table(number: Union[int, float], unit: Optional[str] = None) -> str:
     within the column's respective header.
 
     """
-    return (
-        f"\\SI{{{number:.6f}}}{{{unit}}}" if unit else f"\\num{{{number:.6f}}}"
-    )
+    temp = SiUnitxTemplate(unit)
+    if unit:
+        temp_str: str = temp.substitute(num=number, unit=unit)
+    else:
+        temp_str: str = temp.substitute(num=number)
+    return temp_str
 
 
 class Chapter(object):
