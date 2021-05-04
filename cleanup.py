@@ -16,36 +16,11 @@ If ``--delete`` is given as ``0``, then the empty folders are printed to console
 
 import argparse
 import pathlib
-import shutil
 
 from api import get_logger
+from api.tools.maintenance import Maintainer
 
 LOGGER = get_logger(__name__)
-
-
-def cleanup(path: pathlib.Path, delete: bool,) -> None:
-    """Cleanup empty folders.
-
-    Parameters
-    ----------
-    path : pathlib.Path
-        The thesis directory.
-    delete : bool
-        Determine if empty folders should be deleted or only printed
-        to console for user notification.
-
-    """
-    for child in path.iterdir():
-        if child.is_dir():
-            if any(child.iterdir()):
-                cleanup(child, delete)
-            else:
-                LOGGER.debug(f"{child} is empty!")
-                if delete:
-                    LOGGER.debug(f"{child} is deleted since {delete=}!\n")
-                    shutil.rmtree(child)
-        else:
-            continue
 
 
 def main(delete: bool = False) -> None:
@@ -58,8 +33,10 @@ def main(delete: bool = False) -> None:
         by default False.
 
     """
-    thesis_dir = pathlib.Path(".")
-    cleanup(thesis_dir, delete)
+    thesis_dir = pathlib.Path("../aerospace-thesis/")
+    maint = Maintainer(thesis_dir)
+    maint.check_main()
+    # maint.cleanup(thesis_dir, delete)
 
 
 if __name__ == "__main__":

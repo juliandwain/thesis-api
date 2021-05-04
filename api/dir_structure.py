@@ -5,6 +5,7 @@ __doc__ = """
 
 import functools
 import pathlib
+import re
 import string
 from typing import Optional, Union
 
@@ -12,8 +13,12 @@ import pandas as pd
 from matplotlib.figure import Figure as MPLFigure
 from plotly.graph_objs._figure import Figure as PLFigure
 
-from . import *
-from .tools import FigureTemplate, TableTemplate
+from . import LATEX_CONFIG_DIC, get_logger
+from .tools.template_strings import (
+    FigureTemplate,
+    SiUnitxTemplate,
+    TableTemplate,
+)
 
 LOGGER = get_logger(__name__)
 """logging.Logger: The module level logger.
@@ -46,9 +51,12 @@ def format_table(number: Union[int, float], unit: Optional[str] = None) -> str:
     within the column's respective header.
 
     """
-    return (
-        f"\\SI{{{number:.6f}}}{{{unit}}}" if unit else f"\\num{{{number:.6f}}}"
-    )
+    temp = SiUnitxTemplate(unit)
+    if unit:
+        temp_str: str = temp.substitute(num=number, unit=unit)
+    else:
+        temp_str: str = temp.substitute(num=number)
+    return temp_str
 
 
 class Chapter(object):
@@ -123,7 +131,8 @@ class Chapter(object):
         Returns
         -------
         pathlib.Path
-            The path within the chapters folder where the figure should be saved.
+            The path within the chapters folder where
+            the figure should be saved.
 
         """
         folders = (
@@ -141,7 +150,7 @@ class Chapter(object):
         self,
         fname: pathlib.Path,
         template_str: string.Template,
-        template_desc: dict[str, Union[float, str]],
+        template_desc: dict[str, Union[float, str, bool]],
     ) -> None:
         """Fill the LaTeX template.
 
@@ -151,11 +160,11 @@ class Chapter(object):
             The file which should be created based on ``template_str``.
         template_str : string.Template
             The template string.
-        template_desc : dict[str, Union[float, str]]
+        template_desc : dict[str, Union[float, str, bool]]
             The fields to write to the template.
         """
         template = template_str.substitute(template_desc)
-        fname.write_text(template, encoding=ENCODING)
+        fname.write_text(template, encoding=LATEX_CONFIG_DIC["encoding"])
 
     def save_fig(
         self,
@@ -176,7 +185,8 @@ class Chapter(object):
             * "caption": Tuple (full_caption, short_caption), which results in
                 ``\caption[short_caption]{full_caption}``;
                 if a single string is passed, no short caption will be set.
-            * "label": The LaTeX label to be placed inside ``\label{}`` in the output.
+            * "label": The LaTeX label to be placed inside ``\label{}``
+                in the output.
                 This is used with ``\(c)ref{}`` in the main ``.tex`` file.
             * "position": The LaTeX positional argument for tables,
                 to be placed after ``\begin{}`` in the output.
@@ -184,8 +194,9 @@ class Chapter(object):
         Raises
         ------
         TypeError
-            If the ``fig`` argument is neither of type ``matplotlib.figure.Figure``
-            nor of type ``plotly.graph_objs._figure.Figure``.
+            If the ``fig`` argument is neither of type
+            ``matplotlib.figure.Figure`` nor of type
+            ``plotly.graph_objs._figure.Figure``.
 
         References
         ----------
@@ -234,7 +245,7 @@ class Chapter(object):
         data: pd.DataFrame,
         data_desc: dict[str, Union[str, tuple]],
         format_cols: Optional[dict[str, Optional[str]]] = None,
-        latex_args: dict[str, Union[float, str]] = {},
+        latex_args: dict[str, Union[float, str, bool]] = {},
     ) -> None:
         r"""Save a result to a table.
 
@@ -250,7 +261,8 @@ class Chapter(object):
             * "caption": Tuple (full_caption, short_caption), which results in
                 ``\caption[short_caption]{full_caption}``;
                 if a single string is passed, no short caption will be set.
-            * "label": The LaTeX label to be placed inside ``\label{}`` in the output.
+            * "label": The LaTeX label to be placed inside ``\label{}``
+                in the output.
                 This is used with ``\(c)ref{}`` in the main ``.tex`` file.
             * "position": The LaTeX positional argument for tables,
                 to be placed after ``\begin{}`` in the output.
@@ -259,7 +271,7 @@ class Chapter(object):
             A dictionary which maps columns to the
             ``format_table`` function which formats floats for LaTeX,
             by default None.
-        latex_args : dict[str, Union[float, str]], optional
+        latex_args : dict[str, Union[float, str, bool]], optional
             A dict of arguments specific for LaTeX, by default {}.
         
         References
@@ -286,14 +298,103 @@ class Chapter(object):
         )  # returns a string since buf is None, see [1]
         if not latex_args:
             latex_args["arraystretch"] = LATEX_CONFIG_DIC["arraystretch"]
-            latex_args["data"] = data_str
-        else:
-            latex_args["data"] = data_str
         # fill the tex template
+        n = data.shape[-1]
+        column_type: Optional[Union[str, list[str]]] = latex_args.pop(
+            "column_type", n * "l"
+        )
+        top_caption: bool = latex_args.pop("top_caption", False)
+        data_str = self._rewrite_table(data_str, n, column_type, top_caption)
+        latex_args["data"] = data_str
         self._fill_template(child_filename, TableTemplate(), latex_args)
         # get the tex filename for the parent
         parent_filename_tex = list(goal_dir.glob("*.tex"))[0]
         self.update(parent_filename_tex, child_filename)
+
+    def _rewrite_table(
+        self,
+        data: str,
+        num_data: int,
+        column_type: Optional[Union[str, list[str]]],
+        top_caption: bool,
+    ) -> str:
+        """Rewrite the LaTeX table generated by pandas.
+
+        Parameters
+        ----------
+        data : str
+            The LaTeX table as string generated by pandas.
+        num_data : int
+            The number of columns.
+        column_type : Optional[Union[str, list[str]]]
+            The column type, this can either be:
+
+                * a string with standard LaTeX table measures, e.g., "llr",
+                    "ccc", "lsss", etc.
+                * a list of strings containing user-defined measures, e.g.,
+                    ["p{3cm}", p{4.5cm}"], etc.
+                * None, which will then use the default settings provided
+                    by pandas
+
+        top_caption : bool
+            Determine whether the caption should be placed above the table
+            or below.
+
+        Returns
+        -------
+        str
+            The LaTeX representation of the table.
+
+        Raises
+        ------
+        AssertionError
+            If the number of columns measures does not match the
+            number of data columns.
+
+        Notes
+        -----
+        - Passing the LaTeX table measure "s" requires the siunitx package,
+            see [1]
+        - When using user-defined measures, the user is warned if the width
+            of the table exceeds the width of the scrbook class
+
+        References
+        ----------
+        [1] http://ctan.math.utah.edu/ctan/tex-archive/macros/latex/contrib/siunitx/siunitx.pdf
+        [2] https://stackoverflow.com/questions/11339210/how-to-get-integer-values-from-a-string-in-python
+        [3] https://stackoverflow.com/questions/4703390/how-to-extract-a-floating-number-from-a-string
+
+        """
+        col_re = re.compile("(?<=tabular}{).*?(?=})")
+        if column_type:
+            assert (
+                n := len(column_type)
+            ) == num_data, f"The number of columns {n} does not match the number of columns in the data {num_data}!"
+            if isinstance(column_type, list):
+                table_width: float = sum(
+                    [
+                        float(re.search(r"[-+]?\d*\.?\d+|\d+", w).group())
+                        for w in column_type
+                    ]
+                )
+                if table_width > (w := LATEX_CONFIG_DIC["scrbook_width"]):
+                    LOGGER.warning(
+                        f"The table width {table_width}cm exceeds the limits by scrbook {w}cm!\n"
+                    )
+                column_type_: str = "".join(column_type)
+            else:
+                column_type_: str = column_type
+            data = col_re.sub(column_type_, data)
+        if not top_caption:
+            temp = data.split("\n")
+            cap = temp[2]  # the caption is always at 3rd place
+            label = temp[3]  # the label is always at 4th place
+            del temp[2]  # delete the values
+            del temp[2]  # delete the values
+            temp.insert(-2, cap)  # insert the caption at the bottom
+            temp.insert(-2, label)  # insert the label at the bottom
+            data = "\n".join(temp)
+        return data
 
     def update(self, parent: pathlib.Path, child: pathlib.Path,) -> None:
         """Update the result.
@@ -317,7 +418,9 @@ class Chapter(object):
                 child_ = "/".join(child.parts[i:])
                 break
         string_ = self._inputstr.substitute(path=child_)
-        with parent.open(mode="r+", encoding=ENCODING) as file:
+        with parent.open(
+            mode="r+", encoding=LATEX_CONFIG_DIC["encoding"]
+        ) as file:
             temp: str = file.read()
             if string_ in temp:
                 LOGGER.debug(f"{string_} is already in {parent}!\n")

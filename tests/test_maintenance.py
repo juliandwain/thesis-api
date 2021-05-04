@@ -5,8 +5,9 @@ import pathlib
 import shutil
 import unittest
 
-from api import ENCODING, TEX_FILE
+from api import LATEX_CONFIG_DIC
 from api.tools.maintenance import Maintainer
+from api.tools.template_strings import InputTemplate
 
 
 class TestMaintainer(unittest.TestCase):
@@ -16,22 +17,37 @@ class TestMaintainer(unittest.TestCase):
         self.thesis_dir.mkdir(parents=True, exist_ok=True)
         self.chapter_dir.mkdir(parents=True, exist_ok=True)
 
+        main_tex = self.thesis_dir / "main.tex"
+
         self.maint = Maintainer(self.thesis_dir)
         template = self.thesis_dir / "chapter.json"
-        with template.open(mode="r", encoding=ENCODING) as file:
+        with template.open(
+            mode="r", encoding=LATEX_CONFIG_DIC["encoding"]
+        ) as file:
             self.data = json.load(file)
 
-    def tearDown(self) -> None:
-        shutil.rmtree(self.chapter_dir)
-
-    def test_check_inputs(self):
         self.maint.init_chapter_dir(
             self.data["chapter"],
             self.data["sections"],
             self.data["subsections"],
         )
+        msg = InputTemplate().substitute(
+            path=self.chapter_dir / "chapter4.tex"
+        )
+        main_tex.write_text(msg, encoding=LATEX_CONFIG_DIC["encoding"])
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.chapter_dir)
+
+    def test_check_inputs(self):
         self.maint.check_inputs(self.thesis_dir)
         assert self.maint.counter == 0
+
+    def test_check_main(self):
+        self.maint.check_main()
+
+    def test_cleanup(self):
+        self.maint.cleanup(self.thesis_dir, delete=False)
 
     def test_create_ftc(self):
         typ = (
@@ -54,19 +70,13 @@ class TestMaintainer(unittest.TestCase):
                     shutil.rmtree(f)
 
     def test_init_chapter(self):
-        self.maint.init_chapter_dir(
-            self.data["chapter"],
-            self.data["sections"],
-            self.data["subsections"],
-        )
-
         def check_files(path: pathlib.Path, m=self.maint, t=self.thesis_dir):
             for child in path.iterdir():
                 if child.is_dir():
                     if any(child.iterdir()):
                         check_files(child)
                 else:
-                    if TEX_FILE in child.parts[-1]:
+                    if LATEX_CONFIG_DIC["tex_file"] in child.parts[-1]:
                         for inp in m.find_input(child):
                             assert (
                                 n := t.resolve() / inp
