@@ -1,4 +1,4 @@
-# aerospace-thesis-api
+# thesis-api
 
 <!--
 *** Thanks for checking out the Best-README-Template. If you have a suggestion
@@ -20,7 +20,7 @@
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][www.linkedin.com/in/julian-stang-35834516bas]
+[![LinkedIn][linkedin-shield]][linkedin-url]
 
 <!-- PROJECT LOGO -->
 <!-- 
@@ -76,7 +76,8 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-This repository should serve as an interface from the aerospace-thesis-code repository to the aerospace-thesis repository.
+This repository is aimed at people writing a bachelor's/master's thesis using the python programming language.
+Interfaces to other programming languages are possible.
 Within this module, the API for accessing the chapter structure is written.
 See the individual modules documentation for further information on how to use this.
 More information to follow.
@@ -213,5 +214,5 @@ Project Link: [https://github.com/your_username/repo_name](https://github.com/yo
 [license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=for-the-badge
 [license-url]: https://github.com/othneildrew/Best-README-Template/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/othneildrew
+[linkedin-url]: www.linkedin.com/in/julian-stang-35834516bas
 [product-screenshot]: images/screenshot.png
