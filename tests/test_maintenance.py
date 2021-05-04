@@ -32,7 +32,7 @@ class TestMaintainer(unittest.TestCase):
             self.data["subsections"],
         )
         msg = InputTemplate().substitute(
-            path=self.chapter_dir / "chapter4.tex"
+            {"path": self.chapter_dir / "chapter4.tex"}
         )
         main_tex.write_text(msg, encoding=LATEX_CONFIG_DIC["encoding"])
 
