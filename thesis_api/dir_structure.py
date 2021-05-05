@@ -27,7 +27,7 @@ LOGGER = get_logger(__name__)
 
 def format_table(number: Union[int, float], unit: Optional[str] = None) -> str:
     r"""Format numbers in tables.
-    
+
     When writing a pandas DataFrame to a LaTeX table,
     this function can be used to wrap the columns specified
     (columns containing numbers) in \num or \SI from siunitx.
@@ -90,7 +90,7 @@ class Chapter(object):
             * "figs"
             * "tabs"
             * "code"
-        
+
         """
         # save the chapter directory
         self._chapter_dir: pathlib.Path = chapter_dir
@@ -162,6 +162,7 @@ class Chapter(object):
             The template string.
         template_desc : dict[str, Union[float, str, bool]]
             The fields to write to the template.
+
         """
         template = template_str.substitute(template_desc)
         fname.write_text(template, encoding=LATEX_CONFIG_DIC["encoding"])
@@ -266,17 +267,18 @@ class Chapter(object):
                 This is used with ``\(c)ref{}`` in the main ``.tex`` file.
             * "position": The LaTeX positional argument for tables,
                 to be placed after ``\begin{}`` in the output.
-            
+
         format_cols : Optional[dict[str, Optional[str]]], optional
             A dictionary which maps columns to the
             ``format_table`` function which formats floats for LaTeX,
             by default None.
         latex_args : dict[str, Union[float, str, bool]], optional
             A dict of arguments specific for LaTeX, by default {}.
-        
+
         References
         ----------
         [1] https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_latex.html
+
         """
         # construct the corresponding path
         goal_dir: pathlib.Path = self._construct_path()
@@ -294,7 +296,10 @@ class Chapter(object):
             formatters = format_cols
         # save the table to the file
         data_str: str = data.to_latex(
-            formatters=formatters, escape=False, index=False, **data_desc,
+            formatters=formatters,
+            escape=False,
+            index=False,
+            **data_desc,
         )  # returns a string since buf is None, see [1]
         if not latex_args:
             latex_args["arraystretch"] = LATEX_CONFIG_DIC["arraystretch"]
@@ -396,7 +401,11 @@ class Chapter(object):
             data = "\n".join(temp)
         return data
 
-    def update(self, parent: pathlib.Path, child: pathlib.Path,) -> None:
+    def update(
+        self,
+        parent: pathlib.Path,
+        child: pathlib.Path,
+    ) -> None:
         """Update the result.
 
         If the result is newly created but should still be located
@@ -409,7 +418,7 @@ class Chapter(object):
             The parent file in which the figure is included.
         child : pathlib.Path
             The figure file which is included in the parent.
-            
+
         """
         # if only the figure should be updated but not the parent and the corresponding input
         temp: str = ""
