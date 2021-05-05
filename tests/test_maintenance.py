@@ -5,9 +5,9 @@ import pathlib
 import shutil
 import unittest
 
-from api import LATEX_CONFIG_DIC
-from api.tools.maintenance import Maintainer
-from api.tools.template_strings import InputTemplate
+from thesis_api import LATEX_CONFIG_DIC
+from thesis_api.tools.maintenance import Maintainer
+from thesis_api.tools.template_strings import InputTemplate
 
 
 class TestMaintainer(unittest.TestCase):
