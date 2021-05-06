@@ -224,7 +224,7 @@ class Chapter(object):
             fig.write_image(f"{child_filename}")
         else:
             raise TypeError(
-                f"fig is neither from matplotlib module {mm} nor form plotly module {mp}!"
+                f"fig is neither from matplotlib module {mm} nor from plotly module {mp}!"
             )
         fig_desc["fname"] = f"{child_filename}".replace("\\", "/")
         # fill the tex template
