@@ -33,7 +33,7 @@ def main(delete: bool = False) -> None:
         by default False.
 
     """
-    thesis_dir = pathlib.Path("../aerospace-thesis/")
+    thesis_dir = pathlib.Path("./tests/data")
     maint = Maintainer(thesis_dir)
     maint.check_main()
     # maint.cleanup(thesis_dir, delete)
