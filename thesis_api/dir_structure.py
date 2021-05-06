@@ -7,11 +7,7 @@ import functools
 import pathlib
 import re
 import string
-from typing import Optional, Union
-
-import pandas as pd
-from matplotlib.figure import Figure as MPLFigure
-from plotly.graph_objs._figure import Figure as PLFigure
+from typing import Any, Optional, Union
 
 from . import LATEX_CONFIG_DIC, get_logger
 from .tools.template_strings import (
@@ -169,14 +165,14 @@ class Chapter(object):
 
     def save_fig(
         self,
-        fig: Union[MPLFigure, PLFigure],
+        fig: Any,
         fig_desc: dict[str, Union[float, str]],
     ) -> None:
         r"""Save a result to a figure.
 
         Parameters
         ----------
-        fig : Union[MPLFigure, PLFigure]
+        fig : Union[matplotlib.figure.Figure, plotly.graph_objs._figure.Figure]
             The figure which should be saved.
         fig_desc : dict[str, Union[float, str]]
             The discription of the figure, see also [1].
@@ -214,19 +210,21 @@ class Chapter(object):
         child_filename_tex = child_folder / self._filename.replace(
             self._fmt, "tex"
         )
-        # save the figure to the file
-        if isinstance(fig, MPLFigure):
+        t = type(fig)
+        # check if t is of type matplotlib figure
+        if t.__module__ == (mm := "matplotlib.figure"):
             fig.savefig(
                 child_filename,
                 dpi=600,
                 orientation="portrait",
                 format=self._fmt,
             )
-        elif isinstance(fig, PLFigure):
+        # check if t is of type plotly figure
+        elif t.__module__ == (mp := "plotly.graph_objs._figure"):
             fig.write_image(f"{child_filename}")
         else:
             raise TypeError(
-                f"fig is neither of type(fig)={MPLFigure} nor of type(fig)={PLFigure}, it is of type {type(fig)=}!"
+                f"fig is neither from matplotlib module {mm} nor form plotly module {mp}!"
             )
         fig_desc["fname"] = f"{child_filename}".replace("\\", "/")
         # fill the tex template
@@ -243,7 +241,7 @@ class Chapter(object):
 
     def save_tab(
         self,
-        data: pd.DataFrame,
+        data,
         data_desc: dict[str, Union[str, tuple]],
         format_cols: Optional[dict[str, Optional[str]]] = None,
         latex_args: dict[str, Union[float, str, bool]] = {},
@@ -252,7 +250,7 @@ class Chapter(object):
 
         Parameters
         ----------
-        data : pd.DataFrame
+        data : pandas.DataFrame
             The data which should be saved as a table.
         data_desc : dict[str, Union[str, tuple]]
             The discription of the figure, see also [1].
