@@ -17,8 +17,8 @@ If ``--delete`` is given as ``0``, then the empty folders are printed to console
 import argparse
 import pathlib
 
-from api import get_logger
-from api.tools.maintenance import Maintainer
+from thesis_api import get_logger
+from thesis_api.tools.maintenance import Maintainer
 
 LOGGER = get_logger(__name__)
 
