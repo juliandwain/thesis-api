@@ -236,7 +236,7 @@ class Maintainer(object):
         Raises
         ------
         e
-            [description]
+            TODO
 
         Notes
         -----

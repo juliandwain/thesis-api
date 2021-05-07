@@ -33,7 +33,7 @@ def format_table(number: Union[int, float], unit: Optional[str] = None) -> str:
     number : Union[int, float]
         The number from the DataFrame.
     unit : Optional[str], optional
-        The corresponding unit, by default None
+        The corresponding unit, by default None.
 
     Returns
     -------
@@ -75,17 +75,17 @@ class Chapter(object):
             The location in which the data should be saved. This is a string,
             e.g.,
 
-            * "chapter3\nsection3"
-            * "chapter4\nsection2\nsubsection1"
-            * "chapter1\n"
+            * "chapter3\nsection3".
+            * "chapter4\nsection2\nsubsection1".
+            * "chapter1\n".
 
         typ : str
             The type of data which should be saved.
             This can be either of the following:
 
-            * "figs"
-            * "tabs"
-            * "code"
+            * "figs".
+            * "tabs".
+            * "code".
 
         """
         # save the chapter directory
@@ -131,15 +131,15 @@ class Chapter(object):
             the figure should be saved.
 
         """
-        folders = (
+        folders: tuple = (
             "",
             "sections/",
             "subsections/",
         )
-        path = ""
+        path: str = ""
         for folder, loc in zip(folders, self._location):
             path += folder + loc + "/"
-        goal_dir = self._chapter_dir / path
+        goal_dir: pathlib.Path = self._chapter_dir / path
         return goal_dir
 
     def _fill_template(
@@ -164,9 +164,7 @@ class Chapter(object):
         fname.write_text(template, encoding=LATEX_CONFIG_DIC["encoding"])
 
     def save_fig(
-        self,
-        fig: Any,
-        fig_desc: dict[str, Union[float, str]],
+        self, fig: Any, fig_desc: dict[str, Union[float, str]],
     ) -> None:
         r"""Save a result to a figure.
 
@@ -241,7 +239,7 @@ class Chapter(object):
 
     def save_tab(
         self,
-        data,
+        data: Any,
         data_desc: dict[str, Union[str, tuple]],
         format_cols: Optional[dict[str, Optional[str]]] = None,
         latex_args: dict[str, Union[float, str, bool]] = {},
@@ -294,10 +292,7 @@ class Chapter(object):
             formatters = format_cols
         # save the table to the file
         data_str: str = data.to_latex(
-            formatters=formatters,
-            escape=False,
-            index=False,
-            **data_desc,
+            formatters=formatters, escape=False, index=False, **data_desc,
         )  # returns a string since buf is None, see [1]
         if not latex_args:
             latex_args["arraystretch"] = LATEX_CONFIG_DIC["arraystretch"]
@@ -333,11 +328,11 @@ class Chapter(object):
             The column type, this can either be:
 
                 * a string with standard LaTeX table measures, e.g., "llr",
-                    "ccc", "lsss", etc.
+                    "ccc", "lSSS", etc.
                 * a list of strings containing user-defined measures, e.g.,
                     ["p{3cm}", p{4.5cm}"], etc.
                 * None, which will then use the default settings provided
-                    by pandas
+                    by pandas.
 
         top_caption : bool
             Determine whether the caption should be placed above the table
@@ -351,15 +346,15 @@ class Chapter(object):
         Raises
         ------
         AssertionError
-            If the number of columns measures does not match the
+            If the number of column measures does not match the
             number of data columns.
 
         Notes
         -----
-        - Passing the LaTeX table measure "s" requires the siunitx package,
-            see [1]
+        - Passing the LaTeX table measure "S" requires the siunitx package,
+            see [1].
         - When using user-defined measures, the user is warned if the width
-            of the table exceeds the width of the scrbook class
+            of the table exceeds the width of the scrbook class.
 
         References
         ----------
@@ -399,11 +394,7 @@ class Chapter(object):
             data = "\n".join(temp)
         return data
 
-    def update(
-        self,
-        parent: pathlib.Path,
-        child: pathlib.Path,
-    ) -> None:
+    def update(self, parent: pathlib.Path, child: pathlib.Path,) -> None:
         """Update the result.
 
         If the result is newly created but should still be located
@@ -419,7 +410,6 @@ class Chapter(object):
 
         """
         # if only the figure should be updated but not the parent and the corresponding input
-        temp: str = ""
         for i, part in enumerate(child.parts):
             if part == "chapters":
                 child_ = "/".join(child.parts[i:])
