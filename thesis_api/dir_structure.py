@@ -164,7 +164,7 @@ class Chapter(object):
         fname.write_text(template, encoding=LATEX_CONFIG_DIC["encoding"])
 
     def save_fig(
-        self, fig: Any, fig_desc: dict[str, Union[float, str]],
+        self, fig: Any, fig_desc: dict[str, Union[float, str, bool]],
     ) -> None:
         r"""Save a result to a figure.
 
@@ -172,7 +172,7 @@ class Chapter(object):
         ----------
         fig : Union[matplotlib.figure.Figure, plotly.graph_objs._figure.Figure]
             The figure which should be saved.
-        fig_desc : dict[str, Union[float, str]]
+        fig_desc : dict[str, Union[float, str, bool]]
             The discription of the figure, see also [1].
             The most important args are:
 
@@ -219,7 +219,20 @@ class Chapter(object):
             )
         # check if t is of type plotly figure
         elif t.__module__ == (mp := "plotly.graph_objs._figure"):
-            fig.write_image(f"{child_filename}")
+            try:
+                from kaleido.scopes.plotly import PlotlyScope  # type: ignore
+
+                scope = PlotlyScope(
+                    plotlyjs="https://cdn.plot.ly/plotly-latest.min.js",
+                    # plotlyjs="/path/to/local/plotly.js",
+                )
+                with child_filename.open(mode="wb") as file:
+                    file.write(scope.transform(fig, format=self._fmt))
+            except ImportError:
+                LOGGER.debug(
+                    f"Kaleido is not installed, falling back to plotly save."
+                )
+                fig.write_image(f"{child_filename}")
         else:
             raise TypeError(
                 f"fig is neither from matplotlib module {mm} nor from plotly module {mp}!"
@@ -242,7 +255,7 @@ class Chapter(object):
         data: Any,
         data_desc: dict[str, Union[str, tuple]],
         format_cols: Optional[dict[str, Optional[str]]] = None,
-        latex_args: dict[str, Union[float, str, bool]] = {},
+        latex_args: dict[str, Union[float, str, bool, list[str]]] = {},
     ) -> None:
         r"""Save a result to a table.
 
@@ -268,8 +281,31 @@ class Chapter(object):
             A dictionary which maps columns to the
             ``format_table`` function which formats floats for LaTeX,
             by default None.
-        latex_args : dict[str, Union[float, str, bool]], optional
+        latex_args : dict[str, Union[float, str, bool, list[str]]], optional
             A dict of arguments specific for LaTeX, by default {}.
+            The arguments can be:
+
+                * "arraystretch": float
+                    The amount of spacing within the table.
+                    If no value is given, then the default value of 1.8
+                    is used.
+                * "column_type": Optional[Union[str, list[str]]]
+                    The column type, this can either be:
+
+                    * a string with standard LaTeX table measures, e.g., "llr",
+                        "ccc", "lSSS", etc.
+                    * a list of strings containing user-defined measures, e.g.,
+                        ["p{3cm}", p{4.5cm}"], etc.
+                    * None, which will then use the default settings provided
+                        by pandas.
+
+                    If no value is given this is set to None.
+
+                * "top_caption": bool
+                    Determine whether the caption should be placed above the table
+                    or below.
+                    If no value is given this is set to False.
+
 
         References
         ----------
@@ -299,7 +335,7 @@ class Chapter(object):
         # fill the tex template
         n = data.shape[-1]
         column_type: Optional[Union[str, list[str]]] = latex_args.pop(
-            "column_type", n * "l"
+            "column_type", None
         )
         top_caption: bool = latex_args.pop("top_caption", False)
         data_str = self._rewrite_table(data_str, n, column_type, top_caption)
@@ -412,9 +448,10 @@ class Chapter(object):
         # if only the figure should be updated but not the parent and the corresponding input
         for i, part in enumerate(child.parts):
             if part == "chapters":
+                # child is not unbound since the for loop breaks
                 child_ = "/".join(child.parts[i:])
                 break
-        string_ = self._inputstr.substitute(path=child_)
+        string_ = self._inputstr.substitute(path=child_)  # type: ignore
         with parent.open(
             mode="r+", encoding=LATEX_CONFIG_DIC["encoding"]
         ) as file:
