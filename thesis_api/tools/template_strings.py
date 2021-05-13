@@ -3,10 +3,15 @@
 __doc__ = """
 This module implements some LaTeX template strings as Python
 template strings, which makes it easy to use them and write to files.
+
+Note that the # type: ignore comment should generally not be used,
+although it seems that in this case there is no other solution
+to the linting problem.
+
 """
 
 import string
-from typing import Mapping, Optional, Union
+from typing import Mapping, Optional
 
 __all__ = [
     "ChapterTemplate",
@@ -67,15 +72,15 @@ class InputTemplate(string.Template):
             The substituted template string.
 
         """
-        path = _InputTemplate__mapping["path"]
+        path = _InputTemplate__mapping["path"]  # type: ignore
         for i, part in enumerate(path.parts):
             if part == "chapters":
                 child: str = "/".join(path.parts[i:])
                 break
             else:
                 child: str = f"{path}"
-        _InputTemplate__mapping["path"] = child
-        return super().substitute(_InputTemplate__mapping, **kwds)
+        _InputTemplate__mapping["path"] = child  # type: ignore
+        return super().substitute(_InputTemplate__mapping, **kwds)  # type: ignore
 
 
 class ChapterTemplate(string.Template):
@@ -168,11 +173,11 @@ class _CaptionTemplate(string.Template):
 
         """
         if self._short_caption:
-            long_caption, short_caption = _CaptionTemplate__mapping["caption"]
-            _CaptionTemplate__mapping["short_caption"] = short_caption
-            _CaptionTemplate__mapping["long_caption"] = long_caption
-            _CaptionTemplate__mapping.pop("caption")
-        return super().substitute(_CaptionTemplate__mapping, **kwds)
+            long_caption, short_caption = _CaptionTemplate__mapping["caption"]  # type: ignore
+            _CaptionTemplate__mapping["short_caption"] = short_caption  # type: ignore
+            _CaptionTemplate__mapping["long_caption"] = long_caption  # type: ignore
+            _CaptionTemplate__mapping.pop("caption")  # type: ignore
+        return super().substitute(_CaptionTemplate__mapping, **kwds)  # type: ignore
 
     def safe_substitute(
         self, __mapping: Mapping[str, object], **kwds: object
@@ -189,11 +194,11 @@ class _CaptionTemplate(string.Template):
 
         """
         if self._short_caption:
-            long_caption, short_caption = _CaptionTemplate__mapping["caption"]
-            _CaptionTemplate__mapping["short_caption"] = short_caption
-            _CaptionTemplate__mapping["long_caption"] = long_caption
-            _CaptionTemplate__mapping.pop("caption")
-        return super().safe_substitute(_CaptionTemplate__mapping, **kwds)
+            long_caption, short_caption = _CaptionTemplate__mapping["caption"]  # type: ignore
+            _CaptionTemplate__mapping["short_caption"] = short_caption  # type: ignore
+            _CaptionTemplate__mapping["long_caption"] = long_caption  # type: ignore
+            _CaptionTemplate__mapping.pop("caption")  # type: ignore
+        return super().safe_substitute(_CaptionTemplate__mapping, **kwds)  # type: ignore
 
 
 class FigureTemplate(_CaptionTemplate):
