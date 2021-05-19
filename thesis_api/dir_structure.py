@@ -12,6 +12,7 @@ from typing import Any, Optional, Union
 from . import LATEX_CONFIG_DIC, get_logger
 from .tools.template_strings import (
     FigureTemplate,
+    InputTemplate,
     SiUnitxTemplate,
     TableTemplate,
 )
@@ -91,13 +92,11 @@ class Chapter(object):
         # save the chapter directory
         self._chapter_dir: pathlib.Path = chapter_dir
         # save the location where it should be saved
-        self._location: list[str] = (
-            location.lower().replace(" ", "").split("\n")
+        self._location: list[str] = location.lower().replace(" ", "").split(
+            "\n"
         )
-        # define a template string with the LaTeX input command
-        self._inputstr = string.Template("\n\\input{$path}\n")
         # get the filename
-        self._filename = filename
+        self._filename: str = filename
         # get the file format
         self._fmt: str = filename.split(".")[-1].lower()
         # get the corresponding folder
@@ -336,11 +335,11 @@ class Chapter(object):
         n = data.shape[-1]
         column_type: Optional[Union[str, list[str]]] = latex_args.pop(
             "column_type", None
-        )
-        top_caption: bool = latex_args.pop("top_caption", False)
+        )  # type: ignore
+        top_caption: bool = latex_args.pop("top_caption", False)  # type: ignore
         data_str = self._rewrite_table(data_str, n, column_type, top_caption)
         latex_args["data"] = data_str
-        self._fill_template(child_filename, TableTemplate(), latex_args)
+        self._fill_template(child_filename, TableTemplate(), latex_args)  # type: ignore
         # get the tex filename for the parent
         parent_filename_tex = list(goal_dir.glob("*.tex"))[0]
         self.update(parent_filename_tex, child_filename)
@@ -430,7 +429,7 @@ class Chapter(object):
             data = "\n".join(temp)
         return data
 
-    def update(self, parent: pathlib.Path, child: pathlib.Path,) -> None:
+    def update(self, parent: pathlib.Path, child: pathlib.Path) -> None:
         """Update the result.
 
         If the result is newly created but should still be located
@@ -445,13 +444,8 @@ class Chapter(object):
             The figure file which is included in the parent.
 
         """
-        # if only the figure should be updated but not the parent and the corresponding input
-        for i, part in enumerate(child.parts):
-            if part == "chapters":
-                # child is not unbound since the for loop breaks
-                child_ = "/".join(child.parts[i:])
-                break
-        string_ = self._inputstr.substitute(path=child_)  # type: ignore
+        template: string.Template = InputTemplate()
+        string_: str = template.substitute({"path": child})
         with parent.open(
             mode="r+", encoding=LATEX_CONFIG_DIC["encoding"]
         ) as file:
