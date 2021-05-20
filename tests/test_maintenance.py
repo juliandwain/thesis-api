@@ -19,7 +19,7 @@ class TestMaintainer(unittest.TestCase):
 
         main_tex = self.thesis_dir / "main.tex"
 
-        self.maint = Maintainer(self.thesis_dir)
+        self.maint = Maintainer(self.thesis_dir, stream=True)
         template = self.thesis_dir / "chapter.json"
         with template.open(
             mode="r", encoding=LATEX_CONFIG_DIC["encoding"]
