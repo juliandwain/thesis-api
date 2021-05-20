@@ -59,6 +59,9 @@ def get_logger(name: str, stream: bool = False) -> logging.Logger:
     ----------
     name : str
         The name of the module to be logged.
+    stream : bool
+        Determine whether to log to console or to a file,
+        by default False.
 
     Returns
     -------
