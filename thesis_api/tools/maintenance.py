@@ -14,18 +14,20 @@ from .template_strings import (
     SubsectionTemplate,
 )
 
-LOGGER = get_logger(__name__, stream=False)
 PATTERN = re.compile("(?<=input{).*?(?=})")
 
 
 class Maintainer(object):
-    def __init__(self, thesis_dir: pathlib.Path) -> None:
+    def __init__(self, thesis_dir: pathlib.Path, stream: bool = False) -> None:
         """Init the class.
 
         Parameters
         ----------
         thesis_dir : pathlib.Path
             The path to the thesis directory.
+        stream : bool
+            Determine whether to log to console or to a file,
+            by default False.
         
         """
         self._thesis_dir: pathlib.Path = thesis_dir
@@ -37,7 +39,9 @@ class Maintainer(object):
         self._sec_template: string.Template = SectionTemplate()
         self._subsec_template: string.Template = SubsectionTemplate()
         self._input_template: string.Template = InputTemplate()
-        super().__init__()
+        # define the logger
+        self._stream = stream
+        self._logger = get_logger(type(self).__name__, stream=stream)
 
     @property
     def counter(self) -> int:
@@ -51,6 +55,14 @@ class Maintainer(object):
 
         """
         return self._counter
+
+    def _assert(self, msg: str, left: Any, right: Any, *args):
+        try:
+            assert left == right, msg.format(*args)
+        except AssertionError as e:
+            if not self._stream:
+                self._logger.critical(msg.format(*args))
+            raise AssertionError from e
 
     def check_inputs(self, child: pathlib.Path) -> None:
         """Recursivley check ``child`` for ``\\input`` statements.
@@ -72,15 +84,15 @@ class Maintainer(object):
                             p := self._thesis_dir.resolve() / inp
                         ).exists():
                             self._counter += 1
-                            LOGGER.warning(
+                            self._logger.warning(
                                 f"File {p} is included in {child_.resolve()} but does not exist!\n"
                             )
                         else:
-                            LOGGER.debug(
+                            self._logger.debug(
                                 f"File {p} is included in {child_.resolve()} and exists!\n"
                             )
 
-    def check_main(self):
+    def check_main(self) -> None:
         """Check the ``main.tex`` file for all input statements.
 
         This function checks 2 cases:
@@ -99,11 +111,11 @@ class Maintainer(object):
             path = (self._thesis_dir / p_in).resolve()
 
             if path.exists():
-                LOGGER.debug(
+                self._logger.debug(
                     f"{path} exists and is included in {self._main_file.resolve()}!\n"
                 )
             else:
-                LOGGER.warning(
+                self._logger.warning(
                     f"{path} does not exist but is included in {self._main_file.resolve()}!\n"
                 )
             for p_glob in self._chapter_dir.glob("chapter*/*.tex"):
@@ -127,12 +139,14 @@ class Maintainer(object):
                 if any(child_.iterdir()):
                     self.cleanup(child_, delete)
                 else:
-                    LOGGER.debug(f"{child_} is empty!")
+                    self._logger.debug(f"{child_} is empty!")
                     if delete:
-                        LOGGER.debug(f"{child_} is deleted since {delete=}!\n")
+                        self._logger.debug(
+                            f"{child_} is deleted since {delete=}!\n"
+                        )
                         shutil.rmtree(child_)
                     else:
-                        LOGGER.debug(
+                        self._logger.debug(
                             f"{child_} is not deleted since {delete=}!\n"
                         )
             else:
@@ -156,9 +170,9 @@ class Maintainer(object):
                 try:
                     temp_path.mkdir(parents=True, exist_ok=False)
                 except FileExistsError:
-                    LOGGER.debug(f"Folder {temp_path} already exists.")
+                    self._logger.debug(f"Folder {temp_path} already exists.")
             else:
-                LOGGER.debug(
+                self._logger.debug(
                     f"Folder {temp_path} was not created because it was set to {v}."
                 )
 
@@ -235,8 +249,10 @@ class Maintainer(object):
 
         Raises
         ------
-        e
-            TODO
+        FileExistsError
+            If the ``chapter*.tex`` file already exists, then no file is
+            overwritten.
+        AssertionError
 
         Notes
         -----
@@ -250,7 +266,7 @@ class Maintainer(object):
         --------
         >>> import json
         >>> import pathlib
-        >>> template = pathlib.Path("PATH/TO/TEMPLATE)
+        >>> template = pathlib.Path("PATH/TO/TEMPLATE")
         >>> with template.open(mode="r", encoding="utf-8") as file:
         >>>     data = json.load(file)
         >>> self.init_chapter_dir(
@@ -268,17 +284,18 @@ class Maintainer(object):
         # get the number of sections in the chapter
         num_sections = chapter.pop("num_sections", 0)
         # test if the number of sections aligns with the number of sections given
-        assert num_sections == (
-            n := len(sections)
-        ), f"Number of sections does not match!\nExpected: {num_sections}, Got: {n}!"
+        n: int = len(sections)
+        msg: str = "Number of sections does not match!\nExpected: {}, Got: {}!"
+        self._assert(msg, num_sections, n, num_sections, n)
         chapter_path = self._chapter_dir / chapter_
         try:
             chapter_path.mkdir(parents=True, exist_ok=False)
         except FileExistsError as e:
-            LOGGER.critical(
-                f"{chapter_path} already exists!\nMaybe you want to create a new chapter?\n"
-            )
-            raise e
+            if not self._stream:
+                self._logger.critical(
+                    f"{chapter_path} already exists!\nMaybe you want to create a new chapter?\n"
+                )
+            raise FileExistsError from e
         chapter_file = chapter_path / (chapter_ + LATEX_CONFIG_DIC["tex_file"])
         # create the chapter directories
         self.create_ftc(chapter_path, chapter)
@@ -294,9 +311,9 @@ class Maintainer(object):
                 sec_num = str(section.pop("section", 10))
                 sec_ = sec_type + sec_num
                 num_subsections = section.pop("num_subsections", 10)
-                assert num_subsections == (
-                    n := len(subsections[sec_num])
-                ), f"Number of subsections does not match!\nExpected: {num_subsections}, Got: {n}!"
+                n = len(subsections[sec_num])
+                msg: str = "Number of subsections does not match!\nExpected: {}, Got: {}!"
+                self._assert(msg, num_subsections, n, num_subsections, n)
                 sec_dir = sec_path / sec_
                 sec_dir.mkdir(parents=True, exist_ok=True)
                 sec_file = sec_dir / (sec_ + LATEX_CONFIG_DIC["tex_file"])
@@ -335,12 +352,12 @@ class Maintainer(object):
                             {"path": subsec_file}
                         )
                 else:
-                    LOGGER.debug(f"No Subsections created in {sec_dir}!")
+                    self._logger.debug(f"No Subsections created in {sec_dir}!")
                 # create the section latex file
                 self.tex_file(sec_file, sec_template_str)
 
         else:
-            LOGGER.debug(f"No Sections created in {chapter_path}!")
+            self._logger.debug(f"No Sections created in {chapter_path}!")
         # create the chapter latex file
         self.tex_file(chapter_file, chapter_template_str)
 
@@ -363,4 +380,4 @@ class Maintainer(object):
         if not path.exists():
             path.write_text(temp, encoding=LATEX_CONFIG_DIC["encoding"])
         else:
-            LOGGER.debug(f"File {path} already exists.")
+            self._logger.debug(f"File {path} already exists.")

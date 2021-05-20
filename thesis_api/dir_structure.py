@@ -17,10 +17,6 @@ from .tools.template_strings import (
     TableTemplate,
 )
 
-LOGGER = get_logger(__name__)
-"""logging.Logger: The module level logger.
-"""
-
 
 def format_table(number: Union[int, float], unit: Optional[str] = None) -> str:
     r"""Format numbers in tables.
@@ -63,6 +59,7 @@ class Chapter(object):
         chapter_dir: pathlib.Path,
         location: str,
         typ: str,
+        stream: bool = False,
     ) -> None:
         r"""Init the class.
 
@@ -88,6 +85,10 @@ class Chapter(object):
             * "tabs".
             * "code".
 
+        stream : bool
+            Determine whether to log to console or to a file,
+            by default False.
+
         """
         # save the chapter directory
         self._chapter_dir: pathlib.Path = chapter_dir
@@ -101,6 +102,9 @@ class Chapter(object):
         self._fmt: str = filename.split(".")[-1].lower()
         # get the corresponding folder
         self._folder: str = typ.lower()
+        # define the logger
+        self._stream = stream
+        self._logger = get_logger(type(self).__name__, stream=stream)
 
     def __str__(self) -> str:
         """String representation of ``self``.
@@ -163,7 +167,7 @@ class Chapter(object):
         fname.write_text(template, encoding=LATEX_CONFIG_DIC["encoding"])
 
     def save_fig(
-        self, fig: Any, fig_desc: dict[str, Union[float, str, bool]],
+        self, fig: Any, fig_desc: dict[str, Union[float, str, bool]], **kwargs
     ) -> None:
         r"""Save a result to a figure.
 
@@ -185,16 +189,33 @@ class Chapter(object):
             * "position": The LaTeX positional argument for tables,
                 to be placed after ``\begin{}`` in the output.
 
+        Other Parameters
+        ----------------
+        Parameters passed to either:
+
+            1. Matplotlib ``savefig`` method, see [2].
+            2. Plotly ``write_image`` method, see [3].
+
         Raises
         ------
+        ImportError
+            If the format is "eps" and the [poppler](https://github.com/cbrunet/python-poppler)
+            library is not installed if plotly is used.
         TypeError
             If the ``fig`` argument is neither of type
             ``matplotlib.figure.Figure`` nor of type
             ``plotly.graph_objs._figure.Figure``.
 
+        Notes
+        -----
+        - If [Kaleido](https://github.com/plotly/Kaleido) is installed,
+            then the ``**kwargs`` argument is currently not used.
+
         References
         ----------
         [1] https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_latex.html
+        [2] https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.savefig.html
+        [3] https://plotly.github.io/plotly.py-docs/generated/plotly.graph_objects.Figure.html#write_image
 
         """
         # construct the corresponding path
@@ -215,9 +236,18 @@ class Chapter(object):
                 dpi=600,
                 orientation="portrait",
                 format=self._fmt,
+                **kwargs,
             )
         # check if t is of type plotly figure
         elif t.__module__ == (mp := "plotly.graph_objs._figure"):
+            if self._fmt == "eps":
+                try:
+                    import poppler  # type: ignore
+                except ImportError as e:
+                    if not self._stream:
+                        msg: str = f"The poppler library needs to be installed when saving to eps format using plotly!"
+                        self._logger.critical(msg)
+                    raise ImportError from e
             try:
                 from kaleido.scopes.plotly import PlotlyScope  # type: ignore
 
@@ -228,14 +258,15 @@ class Chapter(object):
                 with child_filename.open(mode="wb") as file:
                     file.write(scope.transform(fig, format=self._fmt))
             except ImportError:
-                LOGGER.debug(
+                self._logger.debug(
                     f"Kaleido is not installed, falling back to plotly save."
                 )
-                fig.write_image(f"{child_filename}")
+                fig.write_image(f"{child_filename}", **kwargs)
         else:
-            raise TypeError(
-                f"fig is neither from matplotlib module {mm} nor from plotly module {mp}!"
-            )
+            msg: str = f"fig is neither from matplotlib module {mm} nor from plotly module {mp}!"
+            if not self._stream:
+                self._logger.critical(msg)
+            raise TypeError(msg)
         fig_desc["fname"] = f"{child_filename}".replace("\\", "/")
         # fill the tex template
         if isinstance(fig_desc["caption"], tuple):
@@ -398,11 +429,17 @@ class Chapter(object):
         [3] https://stackoverflow.com/questions/4703390/how-to-extract-a-floating-number-from-a-string
 
         """
-        col_re = re.compile("(?<=tabular}{).*?(?=})")
         if column_type:
-            assert (
-                n := len(column_type)
-            ) == num_data, f"The number of columns {n} does not match the number of columns in the data {num_data}!"
+            col_re = re.compile("(?<=tabular}{).*?(?=})")
+            try:
+                msg: str = "The number of columns {} does not match the number of columns in the data {}!"
+                assert (n := len(column_type)) == num_data, msg.format(
+                    n, num_data
+                )
+            except AssertionError as e:
+                if not self._stream:
+                    self._logger.critical(msg.format(n, num_data))
+                raise AssertionError from e
             if isinstance(column_type, list):
                 table_width: float = sum(
                     [
@@ -411,7 +448,7 @@ class Chapter(object):
                     ]
                 )
                 if table_width > (w := LATEX_CONFIG_DIC["scrbook_width"]):
-                    LOGGER.warning(
+                    self._logger.warning(
                         f"The table width {table_width}cm exceeds the limits by scrbook {w}cm!\n"
                     )
                 column_type_: str = "".join(column_type)
@@ -451,9 +488,9 @@ class Chapter(object):
         ) as file:
             temp: str = file.read()
             if string_ in temp:
-                LOGGER.debug(f"{string_} is already in {parent}!\n")
+                self._logger.debug(f"{string_} is already in {parent}!\n")
             else:
-                LOGGER.debug(
+                self._logger.debug(
                     f"{string_} is appended to the end of {parent}!\n"
                 )
                 file.write(string_)
