@@ -232,22 +232,18 @@ class Chapter(object):
         # check if t is of type matplotlib figure
         if t.__module__ == (mm := "matplotlib.figure"):
             fig.savefig(
-                child_filename,
-                dpi=600,
-                orientation="portrait",
-                format=self._fmt,
-                **kwargs,
+                child_filename, format=self._fmt, **kwargs,
             )
         # check if t is of type plotly figure
         elif t.__module__ == (mp := "plotly.graph_objs._figure"):
             if self._fmt == "eps":
                 try:
                     import poppler  # type: ignore
-                except ImportError as e:
+                except ModuleNotFoundError as e:
                     if not self._stream:
                         msg: str = f"The poppler library needs to be installed when saving to eps format using plotly!"
                         self._logger.critical(msg)
-                    raise ImportError from e
+                    raise ModuleNotFoundError from e
             try:
                 from kaleido.scopes.plotly import PlotlyScope  # type: ignore
 
@@ -257,8 +253,8 @@ class Chapter(object):
                 )
                 with child_filename.open(mode="wb") as file:
                     file.write(scope.transform(fig, format=self._fmt))
-            except ImportError:
-                self._logger.debug(
+            except ModuleNotFoundError:
+                self._logger.warning(
                     f"Kaleido is not installed, falling back to plotly save."
                 )
                 fig.write_image(f"{child_filename}", **kwargs)
