@@ -30,15 +30,15 @@ class SiUnitxTemplate(string.Template):
         if kwds:
             opt_args = "\n"
             for k, v in kwds.items():
-                opt_args += k + "=" + v + "\n"
+                opt_args += k + "=" + v + ",\n"
             if unit:
-                template: str = "\\SI[" + opt_args + "]{$num}{$unit}"
+                template: str = "\\qty[" + opt_args + "]{$num}{$unit}"
 
             else:
                 template: str = "\\num[" + opt_args + "]{$num}"
         else:
             if unit:
-                template: str = "\\SI{$num}{$unit}"
+                template: str = "\\qty{$num}{$unit}"
             else:
                 template: str = "\\num{$num}"
         super().__init__(template)
