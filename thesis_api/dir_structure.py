@@ -147,27 +147,30 @@ class Chapter(object):
 
     def _fill_template(
         self,
-        fname: pathlib.Path,
+        path: pathlib.Path,
         template_str: string.Template,
-        template_desc: dict[str, Union[float, str, bool]],
+        template_desc: dict[str, Union[float, str, bool, pathlib.Path]],
     ) -> None:
         """Fill the LaTeX template.
 
         Parameters
         ----------
-        fname : pathlib.Path
+        path : pathlib.Path
             The file which should be created based on ``template_str``.
         template_str : string.Template
             The template string.
-        template_desc : dict[str, Union[float, str, bool]]
+        template_desc : dict[str, Union[float, str, bool, pathlib.Path]]
             The fields to write to the template.
 
         """
         template = template_str.substitute(template_desc)
-        fname.write_text(template, encoding=LATEX_CONFIG_DIC["encoding"])
+        path.write_text(template, encoding=LATEX_CONFIG_DIC["encoding"])
 
     def save_fig(
-        self, fig: Any, fig_desc: dict[str, Union[float, str, bool]], **kwargs
+        self,
+        fig: Any,
+        fig_desc: dict[str, Union[float, str, bool, pathlib.Path]],
+        **kwargs,
     ) -> None:
         r"""Save a result to a figure.
 
@@ -175,7 +178,7 @@ class Chapter(object):
         ----------
         fig : Union[matplotlib.figure.Figure, plotly.graph_objs._figure.Figure]
             The figure which should be saved.
-        fig_desc : dict[str, Union[float, str, bool]]
+        fig_desc : dict[str, Union[float, str, bool, pathlib.Path]]
             The discription of the figure, see also [1].
             The most important args are:
 
@@ -228,6 +231,7 @@ class Chapter(object):
         child_filename_tex = child_folder / self._filename.replace(
             self._fmt, "tex"
         )
+        fig_desc["path"] = child_filename
         t = type(fig)
         # check if t is of type matplotlib figure
         if t.__module__ == (mm := "matplotlib.figure"):
@@ -263,7 +267,6 @@ class Chapter(object):
             if not self._stream:
                 self._logger.critical(msg)
             raise TypeError(msg)
-        fig_desc["fname"] = f"{child_filename}".replace("\\", "/")
         # fill the tex template
         if isinstance(fig_desc["caption"], tuple):
             short = True

@@ -11,6 +11,7 @@ to the linting problem.
 """
 
 import string
+import pathlib
 from typing import Mapping, Optional
 
 __all__ = [
@@ -23,6 +24,33 @@ __all__ = [
     "InputTemplate",
     "SiUnitxTemplate",
 ]
+
+
+def reformat_path(path: pathlib.Path) -> str:
+    """Reformat the path structure.
+
+    The ``path`` structure is replaced by the actual path,
+    but the path starts at ``chapters`` and the windows backslashes \\
+    are replaced by slashes /.
+
+    Parameters
+    ----------
+    path : pathlib.Path
+        The path which should be formatted.
+
+    Returns
+    -------
+    str
+        A string representation of the reformatted path.
+
+    """
+    for i, part in enumerate(path.parts):
+        if part == "chapters":
+            child: str = "/".join(path.parts[i:])
+            break
+        else:
+            child: str = f"{path}"
+    return child
 
 
 class SiUnitxTemplate(string.Template):
@@ -73,12 +101,7 @@ class InputTemplate(string.Template):
 
         """
         path = _InputTemplate__mapping["path"]  # type: ignore
-        for i, part in enumerate(path.parts):
-            if part == "chapters":
-                child: str = "/".join(path.parts[i:])
-                break
-            else:
-                child: str = f"{path}"
+        child = reformat_path(path)
         _InputTemplate__mapping["path"] = child  # type: ignore
         return super().substitute(_InputTemplate__mapping, **kwds)  # type: ignore
 
@@ -219,11 +242,12 @@ class FigureTemplate(_CaptionTemplate):
             by default False.
 
         """
+
         if short_caption:
             template: str = (
                 "\\begin{figure}[$position]\n"
                 "\t\\centering\n"
-                "\t\\includegraphics[width=$width\\textwidth]{$fname}\n"
+                "\t\\includegraphics[width=$width\\textwidth]{$path}\n"
                 "\t\\caption[$short_caption]{$long_caption}\n"
                 "\t\\label{fig:$label}\n"
                 "\\end{figure}\n"
@@ -232,12 +256,20 @@ class FigureTemplate(_CaptionTemplate):
             template: str = (
                 "\\begin{figure}[$position]\n"
                 "\t\\centering\n"
-                "\t\\includegraphics[width=$width\\textwidth]{$fname}\n"
+                "\t\\includegraphics[width=$width\\textwidth]{$path}\n"
                 "\t\\caption{$caption}\n"
                 "\t\\label{fig:$label}\n"
                 "\\end{figure}\n"
             )
         super().__init__(template, short_caption)
+
+    def substitute(
+        self, __mapping: Mapping[str, object], **kwds: object
+    ) -> str:
+        path = _FigureTemplate__mapping["path"]  # type: ignore
+        child = reformat_path(path)
+        _FigureTemplate__mapping["path"] = child  # type: ignore
+        return super().substitute(__mapping=__mapping, **kwds)
 
 
 class TableTemplate(string.Template):
@@ -287,7 +319,7 @@ class CodeTemplate(_CaptionTemplate):
         if short_caption:
             template: str = (
                 "\\begin{listing}[$position]\n"
-                "\t\\inputminted{$language}{$fname}\n"
+                "\t\\inputminted{$language}{$path}\n"
                 "\t\\caption[$short_caption]{$long_caption}\n"
                 "\t\\label{lst:$label}\n"
                 "\\end{listing}\n"
@@ -295,9 +327,17 @@ class CodeTemplate(_CaptionTemplate):
         else:
             template: str = (
                 "\\begin{listing}[$position]\n"
-                "\t\\inputminted{$language}{$fname}\n"
+                "\t\\inputminted{$language}{$path}\n"
                 "\t\\caption{$caption}\n"
                 "\t\\label{lst:$label}\n"
                 "\\end{listing}\n"
             )
         super().__init__(template, short_caption)
+
+    def substitute(
+        self, __mapping: Mapping[str, object], **kwds: object
+    ) -> str:
+        path = _CodeTemplate__mapping["path"]  # type: ignore
+        child = reformat_path(path)
+        _CodeTemplate__mapping["path"] = child  # type: ignore
+        return super().substitute(__mapping=__mapping, **kwds)
