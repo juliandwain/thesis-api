@@ -221,6 +221,9 @@ class _CaptionTemplate(string.Template):
             _CaptionTemplate__mapping["short_caption"] = short_caption  # type: ignore
             _CaptionTemplate__mapping["long_caption"] = long_caption  # type: ignore
             _CaptionTemplate__mapping.pop("caption")  # type: ignore
+        path = _CaptionTemplate__mapping["path"]  # type: ignore
+        child = reformat_path(path)
+        _CaptionTemplate__mapping["path"] = child  # type: ignore
         return super().safe_substitute(_CaptionTemplate__mapping, **kwds)  # type: ignore
 
 
@@ -262,14 +265,6 @@ class FigureTemplate(_CaptionTemplate):
                 "\\end{figure}\n"
             )
         super().__init__(template, short_caption)
-
-    def substitute(
-        self, __mapping: Mapping[str, object], **kwds: object
-    ) -> str:
-        path = _FigureTemplate__mapping["path"]  # type: ignore
-        child = reformat_path(path)
-        _FigureTemplate__mapping["path"] = child  # type: ignore
-        return super().substitute(__mapping=__mapping, **kwds)
 
 
 class TableTemplate(string.Template):
@@ -334,10 +329,3 @@ class CodeTemplate(_CaptionTemplate):
             )
         super().__init__(template, short_caption)
 
-    def substitute(
-        self, __mapping: Mapping[str, object], **kwds: object
-    ) -> str:
-        path = _CodeTemplate__mapping["path"]  # type: ignore
-        child = reformat_path(path)
-        _CodeTemplate__mapping["path"] = child  # type: ignore
-        return super().substitute(__mapping=__mapping, **kwds)
