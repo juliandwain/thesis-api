@@ -200,6 +200,9 @@ class _CaptionTemplate(string.Template):
             _CaptionTemplate__mapping["short_caption"] = short_caption  # type: ignore
             _CaptionTemplate__mapping["long_caption"] = long_caption  # type: ignore
             _CaptionTemplate__mapping.pop("caption")  # type: ignore
+        path = _CaptionTemplate__mapping["path"]  # type: ignore
+        child = reformat_path(path)
+        _CaptionTemplate__mapping["path"] = child  # type: ignore
         return super().substitute(_CaptionTemplate__mapping, **kwds)  # type: ignore
 
     def safe_substitute(
