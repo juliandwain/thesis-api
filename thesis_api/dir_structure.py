@@ -7,7 +7,7 @@ import functools
 import pathlib
 import re
 import string
-from typing import Any, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 from . import LATEX_CONFIG_DIC, get_logger
 from .tools.template_strings import (
@@ -18,7 +18,11 @@ from .tools.template_strings import (
 )
 
 
-def format_table(number: Union[int, float], unit: Optional[str] = None) -> str:
+def format_table(
+    number: Union[int, float],
+    unit: Optional[str] = None,
+    kwds: dict[str, str] = {},
+) -> str:
     r"""Format numbers in tables.
 
     When writing a pandas DataFrame to a LaTeX table,
@@ -31,6 +35,9 @@ def format_table(number: Union[int, float], unit: Optional[str] = None) -> str:
         The number from the DataFrame.
     unit : Optional[str], optional
         The corresponding unit, by default None.
+    kwds : dict[str, str]
+        A dictionary which gives additional information to the macros of
+        siunitx.
 
     Returns
     -------
@@ -44,7 +51,7 @@ def format_table(number: Union[int, float], unit: Optional[str] = None) -> str:
     within the column's respective header.
 
     """
-    temp = SiUnitxTemplate(unit)
+    temp = SiUnitxTemplate(unit, kwds)
     if unit:
         temp_str: str = temp.substitute(num=number, unit=unit)
     else:
@@ -147,27 +154,30 @@ class Chapter(object):
 
     def _fill_template(
         self,
-        fname: pathlib.Path,
+        path: pathlib.Path,
         template_str: string.Template,
-        template_desc: dict[str, Union[float, str, bool]],
+        template_desc: dict[str, Union[float, str, bool, pathlib.Path]],
     ) -> None:
         """Fill the LaTeX template.
 
         Parameters
         ----------
-        fname : pathlib.Path
+        path : pathlib.Path
             The file which should be created based on ``template_str``.
         template_str : string.Template
             The template string.
-        template_desc : dict[str, Union[float, str, bool]]
+        template_desc : dict[str, Union[float, str, bool, pathlib.Path]]
             The fields to write to the template.
 
         """
         template = template_str.substitute(template_desc)
-        fname.write_text(template, encoding=LATEX_CONFIG_DIC["encoding"])
+        path.write_text(template, encoding=LATEX_CONFIG_DIC["encoding"])
 
     def save_fig(
-        self, fig: Any, fig_desc: dict[str, Union[float, str, bool]], **kwargs
+        self,
+        fig: Any,
+        fig_desc: dict[str, Union[float, str, bool, pathlib.Path]],
+        **kwargs,
     ) -> None:
         r"""Save a result to a figure.
 
@@ -175,7 +185,7 @@ class Chapter(object):
         ----------
         fig : Union[matplotlib.figure.Figure, plotly.graph_objs._figure.Figure]
             The figure which should be saved.
-        fig_desc : dict[str, Union[float, str, bool]]
+        fig_desc : dict[str, Union[float, str, bool, pathlib.Path]]
             The discription of the figure, see also [1].
             The most important args are:
 
@@ -228,6 +238,7 @@ class Chapter(object):
         child_filename_tex = child_folder / self._filename.replace(
             self._fmt, "tex"
         )
+        fig_desc["path"] = child_filename
         t = type(fig)
         # check if t is of type matplotlib figure
         if t.__module__ == (mm := "matplotlib.figure"):
@@ -263,7 +274,6 @@ class Chapter(object):
             if not self._stream:
                 self._logger.critical(msg)
             raise TypeError(msg)
-        fig_desc["fname"] = f"{child_filename}".replace("\\", "/")
         # fill the tex template
         if isinstance(fig_desc["caption"], tuple):
             short = True
@@ -280,7 +290,11 @@ class Chapter(object):
         self,
         data: Any,
         data_desc: dict[str, Union[str, tuple]],
-        format_cols: Optional[dict[str, Optional[str]]] = None,
+        format_cols: Optional[
+            dict[
+                str, Union[tuple[str, dict[str, Union[str, int, float]]], str]
+            ]
+        ] = None,
         latex_args: dict[str, Union[float, str, bool, list[str]]] = {},
     ) -> None:
         r"""Save a result to a table.
@@ -303,7 +317,7 @@ class Chapter(object):
             * "position": The LaTeX positional argument for tables,
                 to be placed after ``\begin{}`` in the output.
 
-        format_cols : Optional[dict[str, Optional[str]]], optional
+        format_cols : Optional[dict[str, Union[tuple[str, dict[str, Union[str, int, float]]], str]]], optional
             A dictionary which maps columns to the
             ``format_table`` function which formats floats for LaTeX,
             by default None.
@@ -346,17 +360,23 @@ class Chapter(object):
             child_folder.mkdir(parents=True, exist_ok=True)
         child_filename = child_folder / self._filename
         if format_cols:
-            formatters = {
-                key: functools.partial(format_table, unit=value)
-                for key, value in format_cols.items()
-            }
+            formatters: dict[str, Callable] = {}
+            for key, value in format_cols.items():
+                if isinstance(value, tuple):
+                    formatters[key] = functools.partial(
+                        format_table, unit=value[0], kwds=value[1]
+                    )
+                else:
+                    formatters[key] = functools.partial(
+                        format_table, unit=value
+                    )
         else:
-            formatters = format_cols
+            formatters = format_cols  # type: ignore
         # save the table to the file
         data_str: str = data.to_latex(
             formatters=formatters, escape=False, index=False, **data_desc,
         )  # returns a string since buf is None, see [1]
-        if not latex_args:
+        if "arraystretch" not in latex_args.keys():
             latex_args["arraystretch"] = LATEX_CONFIG_DIC["arraystretch"]
         # fill the tex template
         n = data.shape[-1]

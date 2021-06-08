@@ -11,6 +11,7 @@ to the linting problem.
 """
 
 import string
+import pathlib
 from typing import Mapping, Optional
 
 __all__ = [
@@ -25,12 +26,50 @@ __all__ = [
 ]
 
 
+def reformat_path(path: pathlib.Path) -> str:
+    """Reformat the path structure.
+
+    The ``path`` structure is replaced by the actual path,
+    but the path starts at ``chapters`` and the windows backslashes \\
+    are replaced by slashes /.
+
+    Parameters
+    ----------
+    path : pathlib.Path
+        The path which should be formatted.
+
+    Returns
+    -------
+    str
+        A string representation of the reformatted path.
+
+    """
+    for i, part in enumerate(path.parts):
+        if part == "chapters":
+            child: str = "/".join(path.parts[i:])
+            break
+        else:
+            child: str = f"{path}"
+    return child
+
+
 class SiUnitxTemplate(string.Template):
     def __init__(self, unit: Optional[str], kwds: dict = {}) -> None:
+        """Generate a siunitx macro.
+
+        Parameters
+        ----------
+        unit : Optional[str]
+            The unit of the quantitity.
+        kwds : dict, optional
+            Additional keyword arguments the macros of the siunitx package
+            take, by default {}.
+        
+        """
         if kwds:
             opt_args = "\n"
             for k, v in kwds.items():
-                opt_args += k + "=" + v + ",\n"
+                opt_args += f"{k}={v},\n"
             if unit:
                 template: str = "\\qty[" + opt_args + "]{$num}{$unit}"
 
@@ -73,12 +112,7 @@ class InputTemplate(string.Template):
 
         """
         path = _InputTemplate__mapping["path"]  # type: ignore
-        for i, part in enumerate(path.parts):
-            if part == "chapters":
-                child: str = "/".join(path.parts[i:])
-                break
-            else:
-                child: str = f"{path}"
+        child = reformat_path(path)
         _InputTemplate__mapping["path"] = child  # type: ignore
         return super().substitute(_InputTemplate__mapping, **kwds)  # type: ignore
 
@@ -177,6 +211,9 @@ class _CaptionTemplate(string.Template):
             _CaptionTemplate__mapping["short_caption"] = short_caption  # type: ignore
             _CaptionTemplate__mapping["long_caption"] = long_caption  # type: ignore
             _CaptionTemplate__mapping.pop("caption")  # type: ignore
+        path = _CaptionTemplate__mapping["path"]  # type: ignore
+        child = reformat_path(path)
+        _CaptionTemplate__mapping["path"] = child  # type: ignore
         return super().substitute(_CaptionTemplate__mapping, **kwds)  # type: ignore
 
     def safe_substitute(
@@ -198,6 +235,9 @@ class _CaptionTemplate(string.Template):
             _CaptionTemplate__mapping["short_caption"] = short_caption  # type: ignore
             _CaptionTemplate__mapping["long_caption"] = long_caption  # type: ignore
             _CaptionTemplate__mapping.pop("caption")  # type: ignore
+        path = _CaptionTemplate__mapping["path"]  # type: ignore
+        child = reformat_path(path)
+        _CaptionTemplate__mapping["path"] = child  # type: ignore
         return super().safe_substitute(_CaptionTemplate__mapping, **kwds)  # type: ignore
 
 
@@ -219,11 +259,12 @@ class FigureTemplate(_CaptionTemplate):
             by default False.
 
         """
+
         if short_caption:
             template: str = (
                 "\\begin{figure}[$position]\n"
                 "\t\\centering\n"
-                "\t\\includegraphics[width=$width\\textwidth]{$fname}\n"
+                "\t\\includegraphics[width=$width\\textwidth]{$path}\n"
                 "\t\\caption[$short_caption]{$long_caption}\n"
                 "\t\\label{fig:$label}\n"
                 "\\end{figure}\n"
@@ -232,7 +273,7 @@ class FigureTemplate(_CaptionTemplate):
             template: str = (
                 "\\begin{figure}[$position]\n"
                 "\t\\centering\n"
-                "\t\\includegraphics[width=$width\\textwidth]{$fname}\n"
+                "\t\\includegraphics[width=$width\\textwidth]{$path}\n"
                 "\t\\caption{$caption}\n"
                 "\t\\label{fig:$label}\n"
                 "\\end{figure}\n"
@@ -287,7 +328,7 @@ class CodeTemplate(_CaptionTemplate):
         if short_caption:
             template: str = (
                 "\\begin{listing}[$position]\n"
-                "\t\\inputminted{$language}{$fname}\n"
+                "\t\\inputminted{$language}{$path}\n"
                 "\t\\caption[$short_caption]{$long_caption}\n"
                 "\t\\label{lst:$label}\n"
                 "\\end{listing}\n"
@@ -295,9 +336,10 @@ class CodeTemplate(_CaptionTemplate):
         else:
             template: str = (
                 "\\begin{listing}[$position]\n"
-                "\t\\inputminted{$language}{$fname}\n"
+                "\t\\inputminted{$language}{$path}\n"
                 "\t\\caption{$caption}\n"
                 "\t\\label{lst:$label}\n"
                 "\\end{listing}\n"
             )
         super().__init__(template, short_caption)
+
