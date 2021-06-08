@@ -69,7 +69,7 @@ class SiUnitxTemplate(string.Template):
         if kwds:
             opt_args = "\n"
             for k, v in kwds.items():
-                opt_args += f"{k}={v},\n"
+                opt_args += f"{k}={v},"
             if unit:
                 template: str = "\\qty[" + opt_args + "]{$num}{$unit}"
 
