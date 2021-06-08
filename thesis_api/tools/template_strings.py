@@ -55,6 +55,17 @@ def reformat_path(path: pathlib.Path) -> str:
 
 class SiUnitxTemplate(string.Template):
     def __init__(self, unit: Optional[str], kwds: dict = {}) -> None:
+        """Generate a siunitx macro.
+
+        Parameters
+        ----------
+        unit : Optional[str]
+            The unit of the quantitity.
+        kwds : dict, optional
+            Additional keyword arguments the macros of the siunitx package
+            take, by default {}.
+        
+        """
         if kwds:
             opt_args = "\n"
             for k, v in kwds.items():
