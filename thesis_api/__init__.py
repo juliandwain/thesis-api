@@ -9,7 +9,7 @@ Note that this interface uses the Numpy style python docstrings.
 import logging
 import sys
 
-__version__ = "0.2.7"
+__version__ = "0.2.9"
 
 
 ##################
