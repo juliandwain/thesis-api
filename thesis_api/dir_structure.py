@@ -376,7 +376,7 @@ class Chapter(object):
         data_str: str = data.to_latex(
             formatters=formatters, escape=False, index=False, **data_desc,
         )  # returns a string since buf is None, see [1]
-        if not latex_args:
+        if "arraystretch" not in latex_args.keys():
             latex_args["arraystretch"] = LATEX_CONFIG_DIC["arraystretch"]
         # fill the tex template
         n = data.shape[-1]
