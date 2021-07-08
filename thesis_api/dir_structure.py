@@ -63,7 +63,7 @@ class Chapter(object):
     def __init__(
         self,
         filename: str,
-        chapter_dir: pathlib.Path,
+        thesis_dir: pathlib.Path,
         location: str,
         typ: str,
         stream: bool = False,
@@ -74,8 +74,8 @@ class Chapter(object):
         ----------
         filename : str
             The name of the data under which it should be saved.
-        chapter_dir : pathlib.Path
-            The chapter directory.
+        thesis_dir : pathlib.Path
+            The directory which contains the whole code for the thesis.
         location : str
             The location in which the data should be saved. This is a string,
             e.g.,
@@ -97,16 +97,19 @@ class Chapter(object):
             by default False.
 
         """
-        # save the chapter directory
-        self._chapter_dir: pathlib.Path = chapter_dir
+        # save the thesis directory
+        self._thesis_dir: pathlib.Path = thesis_dir
+        # create a link to the figures, source, and chapters directory
+        self._figures_dir = self._thesis_dir / "figures"
+        self._source_dir = self._thesis_dir / "source"
+        self._chapter_dir: pathlib.Path = self._source_dir / "chapters"
         # save the location where it should be saved
         self._location: list[str] = location.lower().replace(" ", "").split(
             "\n"
         )
-        # get the filename
-        self._filename: str = filename
-        # get the file format
-        self._fmt: str = filename.split(".")[-1].lower()
+        # get the filename and the file format
+        self._filename, self._fmt = filename.split(".")
+        self._fmt = self._fmt.lower()
         # get the corresponding folder
         self._folder: str = typ.lower()
         # define the logger
@@ -234,11 +237,11 @@ class Chapter(object):
         child_folder = goal_dir / self._folder
         if not child_folder.exists():
             child_folder.mkdir(parents=True, exist_ok=True)
-        child_filename = child_folder / self._filename
-        child_filename_tex = child_folder / self._filename.replace(
-            self._fmt, "tex"
-        )
-        fig_desc["path"] = child_filename
+        filename: str = f"{self._filename}_{'_'.join(self._location)}.{self._fmt}"
+        child_filename = self._figures_dir / filename
+        child_filename_tex = child_folder / f"{self._filename}.tex"
+        # fig_desc["path"] = child_filename
+        fig_desc["path"] = child_filename.parts[-2:]  # type: ignore
         t = type(fig)
         # check if t is of type matplotlib figure
         if t.__module__ == (mm := "matplotlib.figure"):
@@ -358,7 +361,7 @@ class Chapter(object):
         child_folder = goal_dir / self._folder
         if not child_folder.exists():
             child_folder.mkdir(parents=True, exist_ok=True)
-        child_filename = child_folder / self._filename
+        child_filename = child_folder / f"{self._filename}.{self._fmt}"
         if format_cols:
             formatters: dict[str, Callable] = {}
             for key, value in format_cols.items():

@@ -9,10 +9,12 @@ Note that this interface uses the Numpy style python docstrings.
 import logging
 import sys
 
-__version__ = "0.2.9"
+__version__ = "0.2.14"
 
 
 ##################
+
+PT_IN_CM: float = 0.03514  # https://tex.stackexchange.com/questions/8260/what-are-the-various-units-ex-em-in-pt-bp-dd-pc-expressed-in-mm
 
 LATEX_CONFIG_DIC = {
     "arraystretch": 1.8,  # scaling of tables
@@ -23,6 +25,7 @@ LATEX_CONFIG_DIC = {
     # This is the line width of the LaTeX class scrbook in [cm], which my be useful for tables, etc.
     # The line length can be obtained by including the package printlen in praeambel.tex and typing
     # \uselengthunit{cm}\printlength{\textwidth} in a file.
+    "article_width": 441.01773 * PT_IN_CM,
 }
 """dict[str, Union[float, int, str]]: The configurations in the LaTeX file.
 """

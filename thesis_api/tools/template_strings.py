@@ -30,7 +30,7 @@ def reformat_path(path: pathlib.Path) -> str:
     """Reformat the path structure.
 
     The ``path`` structure is replaced by the actual path,
-    but the path starts at ``chapters`` and the windows backslashes \\
+    but the path starts at ``source`` and the windows backslashes \\
     are replaced by slashes /.
 
     Parameters
@@ -45,7 +45,7 @@ def reformat_path(path: pathlib.Path) -> str:
 
     """
     for i, part in enumerate(path.parts):
-        if part == "chapters":
+        if part == "source":
             child: str = "/".join(path.parts[i:])
             break
         else:
@@ -69,7 +69,7 @@ class SiUnitxTemplate(string.Template):
         if kwds:
             opt_args = "\n"
             for k, v in kwds.items():
-                opt_args += f"{k}={v},\n"
+                opt_args += f"{k}={v},"
             if unit:
                 template: str = "\\qty[" + opt_args + "]{$num}{$unit}"
 
@@ -211,9 +211,6 @@ class _CaptionTemplate(string.Template):
             _CaptionTemplate__mapping["short_caption"] = short_caption  # type: ignore
             _CaptionTemplate__mapping["long_caption"] = long_caption  # type: ignore
             _CaptionTemplate__mapping.pop("caption")  # type: ignore
-        path = _CaptionTemplate__mapping["path"]  # type: ignore
-        child = reformat_path(path)
-        _CaptionTemplate__mapping["path"] = child  # type: ignore
         return super().substitute(_CaptionTemplate__mapping, **kwds)  # type: ignore
 
     def safe_substitute(
@@ -235,9 +232,6 @@ class _CaptionTemplate(string.Template):
             _CaptionTemplate__mapping["short_caption"] = short_caption  # type: ignore
             _CaptionTemplate__mapping["long_caption"] = long_caption  # type: ignore
             _CaptionTemplate__mapping.pop("caption")  # type: ignore
-        path = _CaptionTemplate__mapping["path"]  # type: ignore
-        child = reformat_path(path)
-        _CaptionTemplate__mapping["path"] = child  # type: ignore
         return super().safe_substitute(_CaptionTemplate__mapping, **kwds)  # type: ignore
 
 
