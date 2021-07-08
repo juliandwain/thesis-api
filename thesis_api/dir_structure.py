@@ -63,7 +63,7 @@ class Chapter(object):
     def __init__(
         self,
         filename: str,
-        chapter_dir: pathlib.Path,
+        thesis_dir: pathlib.Path,
         location: str,
         typ: str,
         stream: bool = False,
@@ -74,8 +74,8 @@ class Chapter(object):
         ----------
         filename : str
             The name of the data under which it should be saved.
-        chapter_dir : pathlib.Path
-            The chapter directory.
+        thesis_dir : pathlib.Path
+            The directory which contains the whole code for the thesis.
         location : str
             The location in which the data should be saved. This is a string,
             e.g.,
@@ -97,8 +97,12 @@ class Chapter(object):
             by default False.
 
         """
-        # save the chapter directory
-        self._chapter_dir: pathlib.Path = chapter_dir
+        # save the thesis directory
+        self._thesis_dir: pathlib.Path = thesis_dir
+        # create a link to the figures, source, and chapters directory
+        self._figures_dir = self._thesis_dir / "figures"
+        self._source_dir = self._thesis_dir / "source"
+        self._chapter_dir: pathlib.Path = self._source_dir / "chapters"
         # save the location where it should be saved
         self._location: list[str] = location.lower().replace(" ", "").split(
             "\n"
@@ -238,7 +242,8 @@ class Chapter(object):
         child_filename_tex = child_folder / self._filename.replace(
             self._fmt, "tex"
         )
-        fig_desc["path"] = child_filename
+        # fig_desc["path"] = child_filename
+        fig_desc["path"] = self._figures_dir / child_filename
         t = type(fig)
         # check if t is of type matplotlib figure
         if t.__module__ == (mm := "matplotlib.figure"):

@@ -30,7 +30,7 @@ def reformat_path(path: pathlib.Path) -> str:
     """Reformat the path structure.
 
     The ``path`` structure is replaced by the actual path,
-    but the path starts at ``chapters`` and the windows backslashes \\
+    but the path starts at ``source`` and the windows backslashes \\
     are replaced by slashes /.
 
     Parameters
@@ -45,7 +45,7 @@ def reformat_path(path: pathlib.Path) -> str:
 
     """
     for i, part in enumerate(path.parts):
-        if part == "chapters":
+        if part == "source":
             child: str = "/".join(path.parts[i:])
             break
         else:
