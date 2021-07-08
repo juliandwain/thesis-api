@@ -107,10 +107,9 @@ class Chapter(object):
         self._location: list[str] = location.lower().replace(" ", "").split(
             "\n"
         )
-        # get the filename
-        self._filename: str = filename
-        # get the file format
-        self._fmt: str = filename.split(".")[-1].lower()
+        # get the filename and the file format
+        self._filename, self._fmt = filename.split(".")
+        self._fmt = self._fmt.lower()
         # get the corresponding folder
         self._folder: str = typ.lower()
         # define the logger
@@ -238,12 +237,11 @@ class Chapter(object):
         child_folder = goal_dir / self._folder
         if not child_folder.exists():
             child_folder.mkdir(parents=True, exist_ok=True)
-        child_filename = child_folder / self._filename
-        child_filename_tex = child_folder / self._filename.replace(
-            self._fmt, "tex"
-        )
+        filename: str = f"{self._filename}_{'_'.join(self._location)}.{self._fmt}"
+        child_filename = self._figures_dir / filename
+        child_filename_tex = child_folder / f"{self._filename}.tex"
         # fig_desc["path"] = child_filename
-        fig_desc["path"] = self._figures_dir / child_filename
+        fig_desc["path"] = child_filename.parts[-2:]  # type: ignore
         t = type(fig)
         # check if t is of type matplotlib figure
         if t.__module__ == (mm := "matplotlib.figure"):
@@ -363,7 +361,7 @@ class Chapter(object):
         child_folder = goal_dir / self._folder
         if not child_folder.exists():
             child_folder.mkdir(parents=True, exist_ok=True)
-        child_filename = child_folder / self._filename
+        child_filename = child_folder / f"{self._filename}.{self._fmt}"
         if format_cols:
             formatters: dict[str, Callable] = {}
             for key, value in format_cols.items():
