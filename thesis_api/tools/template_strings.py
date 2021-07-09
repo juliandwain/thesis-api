@@ -127,10 +127,10 @@ class ChapterTemplate(string.Template):
 
     def __init__(self) -> None:
         template: str = (
-            "% !TEX root = ../../main.tex\n\n"
-            "\\chapter{$title}\n"
-            "\\label{cha:$label}\n\n"
-            "This is a chapter.\n"
+            "% !TEX root = ../../../thesis.tex\n\n"
+            "\\chapter{$title}%\n"
+            "\\label{cha:$label}%\n\n"
+            "This is a chapter.%\n"
         )
         super().__init__(template)
 
@@ -145,9 +145,9 @@ class SectionTemplate(string.Template):
 
     def __init__(self) -> None:
         template: str = (
-            "\\section{$title}\n"
-            "\\label{sec:$label}\n\n"
-            "This is a section within a chapter.\n"
+            "\\section{$title}%\n"
+            "\\label{sec:$label}%\n\n"
+            "This is a section within a chapter.%\n"
         )
         super().__init__(template)
 
@@ -162,9 +162,9 @@ class SubsectionTemplate(string.Template):
 
     def __init__(self) -> None:
         template: str = (
-            "\\subsection{$title}\n"
-            "\\label{subsec:$label}\n\n"
-            "This is a subsection within a section.\n"
+            "\\subsection{$title}%\n"
+            "\\label{subsec:$label}%\n\n"
+            "This is a subsection within a section.%\n"
         )
         super().__init__(template)
 
@@ -256,21 +256,21 @@ class FigureTemplate(_CaptionTemplate):
 
         if short_caption:
             template: str = (
-                "\\begin{figure}[$position]\n"
-                "\t\\centering\n"
-                "\t\\includegraphics[width=$width\\textwidth]{$path}\n"
-                "\t\\caption[$short_caption]{$long_caption}\n"
-                "\t\\label{fig:$label}\n"
-                "\\end{figure}\n"
+                "\\begin{figure}[$position]%\n"
+                "\t\\centering%\n"
+                "\t\\includegraphics[width=$width\\textwidth]{$path}%\n"
+                "\t\\caption[$short_caption]{$long_caption}%\n"
+                "\t\\label{fig:$label}%\n"
+                "\\end{figure}%\n"
             )
         else:
             template: str = (
-                "\\begin{figure}[$position]\n"
-                "\t\\centering\n"
-                "\t\\includegraphics[width=$width\\textwidth]{$path}\n"
-                "\t\\caption{$caption}\n"
-                "\t\\label{fig:$label}\n"
-                "\\end{figure}\n"
+                "\\begin{figure}[$position]%\n"
+                "\t\\centering%\n"
+                "\t\\includegraphics[width=$width\\textwidth]{$path}%\n"
+                "\t\\caption{$caption}%\n"
+                "\t\\label{fig:$label}%\n"
+                "\\end{figure}%\n"
             )
         super().__init__(template, short_caption)
 
@@ -293,10 +293,10 @@ class TableTemplate(string.Template):
 
     def __init__(self) -> None:
         template: str = (
-            "\\begingroup\n"
-            "\\renewcommand{\\arraystretch}{$arraystretch}\n"
+            "\\begingroup%\n"
+            "\\renewcommand{\\arraystretch}{$arraystretch}%\n"
             "$data\n"
-            "\\endgroup\n"
+            "\\endgroup%\n"
         )
         super().__init__(template)
 
@@ -321,19 +321,19 @@ class CodeTemplate(_CaptionTemplate):
         """
         if short_caption:
             template: str = (
-                "\\begin{listing}[$position]\n"
-                "\t\\inputminted{$language}{$path}\n"
-                "\t\\caption[$short_caption]{$long_caption}\n"
-                "\t\\label{lst:$label}\n"
-                "\\end{listing}\n"
+                "\\begin{listing}[$position]%\n"
+                "\t\\inputminted{$language}{$path}%\n"
+                "\t\\caption[$short_caption]{$long_caption}%\n"
+                "\t\\label{lst:$label}%\n"
+                "\\end{listing}%\n"
             )
         else:
             template: str = (
-                "\\begin{listing}[$position]\n"
-                "\t\\inputminted{$language}{$path}\n"
-                "\t\\caption{$caption}\n"
-                "\t\\label{lst:$label}\n"
-                "\\end{listing}\n"
+                "\\begin{listing}[$position]%\n"
+                "\t\\inputminted{$language}{$path}%\n"
+                "\t\\caption{$caption}%\n"
+                "\t\\label{lst:$label}%\n"
+                "\\end{listing}%\n"
             )
         super().__init__(template, short_caption)
 
