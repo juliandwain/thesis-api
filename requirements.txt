@@ -5,6 +5,7 @@ certifi==2020.12.5
 click @ file:///home/linux1/recipes/ci/click_1610990599742/work
 mypy-extensions==0.4.1
 pathspec==0.7.0
+pypandoc==1.6.3
 regex @ file:///tmp/build/80754af9/regex_1617569713718/work
 toml @ file:///tmp/build/80754af9/toml_1616166611790/work
 typed-ast @ file:///tmp/build/80754af9/typed-ast_1610484076176/work
